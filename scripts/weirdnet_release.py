@@ -53,7 +53,7 @@ try:
 except ImportError:  # Python < 3.11 (e.g. Ubuntu 22.04 runners): mini_toml() below
     tomllib = None
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 CONFIG = "release.toml"
 ORDER = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
@@ -1013,14 +1013,20 @@ def cut(a, root):
     pfx = cfg.get("tag_prefix", "v")
     if a.version and a.pre:
         raise ReleaseError("--pre and --version don't mix (write the pre-release into --version)")
-    if a.version:
+    if a.first:
+        if a.version or a.part or a.pre:
+            raise ReleaseError("--first releases the current version; it doesn't mix with --version, --major/--minor/--patch or --pre")
+        if tags(root, pfx):
+            raise ReleaseError(f"--first is only for a project with no {pfx}* tags yet")
+        new, part = old, "first"
+    elif a.version:
         new = a.version
         parse_version(new)
         part = "explicit"
     else:
         part = a.part or ("pre" if a.pre else "minor")
         new = bump(old, a.part, a.pre) if a.pre else bump(old, part)
-    if parse_version(new) <= parse_version(old):
+    if not a.first and parse_version(new) <= parse_version(old):
         raise ReleaseError(f"version must increase ({old} -> {new})")
     tag = f"{pfx}{new}"
     date = a.date or today(cfg["timezone"])
@@ -1719,6 +1725,8 @@ def parser():
     g.add_argument("--minor", dest="part", action="store_const", const="minor", help="the default")
     g.add_argument("--patch", dest="part", action="store_const", const="patch")
     g.add_argument("--version", help="explicit X.Y.Z or X.Y.Z-(alpha|beta|rc).N (must increase)")
+    c.add_argument("--first", action="store_true", help="release the current version as the first release "
+                   "(no tags yet; the version files keep their version)")
     c.add_argument("--pre", choices=PRE_STAGES, help="a pre-release: continue the current one (alpha.7 -> alpha.8) "
                    "or start one (with --major/--minor/--patch, default the next minor)")
     c.add_argument("message", nargs="*", help="changelog bullets / commit body (`Fixed: ...` picks a section)")

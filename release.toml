@@ -7,7 +7,7 @@
 # files and creates the GitHub release with `weirdnet_release.py github X.Y.Z`.
 #
 # weirdnet-net is released first from its own repo; the relay pins the published version.
-helpers = "0.3.1"
+helpers = "0.3.2"
 project = "weirdnet-relay"
 timezone = "America/New_York"
 next = [
