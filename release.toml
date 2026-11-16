@@ -33,6 +33,7 @@ lock = "Cargo.lock"
 
 [changelog]
 path = "CHANGELOG.md"
+links = "https://github.com/WeirdBrains/weirdnet-relay"
 default_section = "Added"
 
 [checks]

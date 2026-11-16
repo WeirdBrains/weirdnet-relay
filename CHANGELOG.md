@@ -18,3 +18,6 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Hardened systemd unit and a Debian package.
 - Deployment guide for relay.net.weirdbrains.com.
 - Example and packaged configs join Weirdnet through the WeirdBrains public relay.
+
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/WeirdBrains/weirdnet-relay/releases/tag/v0.1.0
