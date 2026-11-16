@@ -1,0 +1,12 @@
+#!/bin/sh
+# weirdnet-relay postrm: reload systemd. Purging keeps the database key credential and the
+# relay's state (its peer id): delete /etc/weirdnet-relay/db-key.cred and
+# /var/lib/private/weirdnet-relay yourself if you mean to.
+set -e
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+if [ "$1" = "purge" ] && [ -f /etc/weirdnet-relay/db-key.cred ]; then
+    echo "weirdnet-relay: kept /etc/weirdnet-relay/db-key.cred and the relay's state (its peer id)."
+fi
+exit 0

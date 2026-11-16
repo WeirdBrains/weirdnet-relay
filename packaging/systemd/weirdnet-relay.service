@@ -16,6 +16,8 @@ Description=Weirdnet relay
 Documentation=https://net.weirdbrains.com/relay https://github.com/WeirdBrains/weirdnet-relay
 Wants=network-online.target
 After=network-online.target
+# No database key, no start (see DEPLOY.md). With LoadCredential= instead, change this path.
+ConditionPathExists=/etc/weirdnet-relay/db-key.cred
 
 [Service]
 Type=exec

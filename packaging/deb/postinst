@@ -1,0 +1,26 @@
+#!/bin/sh
+# weirdnet-relay postinst: reload systemd; enable and start the service only once its
+# database key credential exists, and restart it on upgrade if it was running.
+set -e
+KEY=/etc/weirdnet-relay/db-key.cred
+if [ "$1" = "configure" ] && [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    if [ -f "$KEY" ]; then
+        systemctl enable weirdnet-relay.service >/dev/null 2>&1 || true
+        if [ -n "$2" ]; then
+            systemctl try-restart weirdnet-relay.service || true
+        else
+            systemctl start weirdnet-relay.service || true
+        fi
+    fi
+fi
+if [ "$1" = "configure" ] && [ ! -f "$KEY" ]; then
+    cat <<MSG
+weirdnet-relay is installed but not started: it needs its database key first.
+  weirdnet-relay gen-key | sudo systemd-creds encrypt --name=db-key - $KEY
+  sudo editor /etc/weirdnet-relay/relay.toml
+  sudo systemctl enable --now weirdnet-relay
+See /usr/share/doc/weirdnet-relay/DEPLOY.md.
+MSG
+fi
+exit 0

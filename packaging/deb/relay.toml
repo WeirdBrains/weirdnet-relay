@@ -1,0 +1,20 @@
+# /etc/weirdnet-relay/relay.toml: weirdnet-relay's configuration (installed by the .deb).
+# Every key is optional; see /usr/share/doc/weirdnet-relay/examples/relay.toml for all of them
+# and /usr/share/doc/weirdnet-relay/DEPLOY.md for the steps. The service does not start until
+# the database key exists as /etc/weirdnet-relay/db-key.cred.
+
+name = "Weirdnet relay"
+# operator = "Example Org"
+# contact = "abuse@example.com"     # shown on the info page; where abuse reports go
+
+[network]
+port = 4747
+# How others reach this relay, without /p2p/ (set this on a public server):
+# external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
+bootstrap = []
+
+[limits]
+preset = "unlimited"
+
+[http]
+listen = "127.0.0.1:4780"

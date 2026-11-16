@@ -11,7 +11,7 @@ homepage = "https://net.weirdbrains.com/relay"
 readme = "README.md"
 keywords = ["p2p", "libp2p", "relay", "weirdnet"]
 categories = ["network-programming", "command-line-utilities"]
-include = ["src/**", "README.md", "DEPLOY.md", "LICENSE", "examples/relay.toml", "packaging/**", "assets/**"]
+include = ["src/**", "README.md", "DEPLOY.md", "CHANGELOG.md", "LICENSE", "examples/relay.toml", "packaging/**", "assets/**"]
 
 [lib]
 name = "weirdnet_relay"
@@ -42,3 +42,30 @@ zeroize = "1"
 [dev-dependencies]
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
+
+# `cargo deb` (cargo-deb 3): the .deb for Debian and Ubuntu servers. See DEPLOY.md.
+[package.metadata.deb]
+maintainer = "m3talsmith <m3talsmith@gmail.com>"
+copyright = "2026, Weird Brains LLC"
+license-file = ["LICENSE", "0"]
+section = "net"
+priority = "optional"
+depends = "$auto"
+recommends = "systemd (>= 250)"
+extended-description = """\
+weirdnet-relay is a relay and bootstrap node for the Weirdnet network: a libp2p circuit \
+relay v2 with no caps by default, a Kademlia server, AutoNAT and hole-punch coordination, \
+a names server for signed peer records, and an info page. Its node key and state live in \
+a SQLCipher database keyed from a systemd credential. The service starts only once that \
+credential exists (see /usr/share/doc/weirdnet-relay/DEPLOY.md)."""
+maintainer-scripts = "packaging/deb/"
+conf-files = ["/etc/weirdnet-relay/relay.toml"]
+assets = [
+  ["target/release/weirdnet-relay", "usr/bin/", "755"],
+  ["packaging/systemd/weirdnet-relay.service", "usr/lib/systemd/system/", "644"],
+  ["packaging/deb/relay.toml", "etc/weirdnet-relay/relay.toml", "644"],
+  ["examples/relay.toml", "usr/share/doc/weirdnet-relay/examples/relay.toml", "644"],
+  ["README.md", "usr/share/doc/weirdnet-relay/", "644"],
+  ["DEPLOY.md", "usr/share/doc/weirdnet-relay/", "644"],
+  ["CHANGELOG.md", "usr/share/doc/weirdnet-relay/", "644"],
+]

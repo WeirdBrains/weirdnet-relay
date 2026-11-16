@@ -22,6 +22,13 @@ fn the_example_config_parses() {
 }
 
 #[test]
+fn the_debian_package_config_is_valid() {
+    let c = Config::from_file(std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/packaging/deb/relay.toml"))).unwrap();
+    c.validate().unwrap();
+    assert!(c.network.external.is_empty(), "the packaged config must not announce an example address");
+}
+
+#[test]
 fn toml_limits_override_the_preset() {
     let c = Config::from_toml(
         r#"

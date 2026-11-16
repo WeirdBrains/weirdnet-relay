@@ -43,6 +43,15 @@ and relay:
 (`https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json`) will give the real
 addresses. [DEPLOY.md](DEPLOY.md) is how it is installed.
 
+## Install
+
+On Debian 12+ and Ubuntu 24.04+, install the `.deb` from a
+[release](https://github.com/WeirdBrains/weirdnet-relay/releases) (amd64 and arm64), or build it
+with `cargo deb` (cargo-deb). It installs the binary, the systemd unit and
+`/etc/weirdnet-relay/relay.toml`, and starts nothing until the database key credential exists.
+[DEPLOY.md](DEPLOY.md) has the steps. Each release also has `tar.gz` builds for x86_64 and
+aarch64 Linux.
+
 ## Quick start
 
     cargo install --git https://github.com/WeirdBrains/weirdnet-relay
@@ -116,8 +125,11 @@ publish the page. `v` only changes on a breaking change.
 ## Building
 
     cargo build --release
+    cargo deb --locked -o dist/      # the .deb (needs cargo-deb and dpkg-dev)
 
-Edition 2024, Rust 1.99+. `cargo test` includes a loopback test that runs a real relay over
+Releases go through the shared WeirdBrains release script, `scripts/weirdnet_release.py`
+(configured in `release.toml`); the Release workflow builds the packages for the tag and
+attaches them to the GitHub release. Edition 2024, Rust 1.99+. `cargo test` includes a loopback test that runs a real relay over
 TCP, reserves a slot, carries a 1 MiB answer through the circuit and asks for the info.
 
 ## License

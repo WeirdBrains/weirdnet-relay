@@ -13,7 +13,24 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - run: python3 scripts/weirdnet_release.py validate
       - run: cargo fmt --check
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked
       - run: cargo build --locked --release
+  deb:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update -q && sudo apt-get install -y -q dpkg-dev
+      - run: cargo install cargo-deb --locked
+      - run: cargo deb --locked -o dist/
+      - run: dpkg-deb --info dist/*.deb && dpkg-deb --contents dist/*.deb
+      - name: Install and remove
+        run: |
+          sudo apt-get install -y ./dist/*.deb
+          if systemctl is-enabled --quiet weirdnet-relay.service; then echo "::error::enabled without db-key.cred"; exit 1; fi
+          sudo systemctl start weirdnet-relay.service
+          if systemctl is-active --quiet weirdnet-relay.service; then echo "::error::started without db-key.cred"; exit 1; fi
+          sudo apt-get purge -y weirdnet-relay

@@ -1,0 +1,82 @@
+# weirdnet-relay release config for the shared WeirdBrains release script
+# (scripts/weirdnet_release.py, vendored byte-identical from weirdnet-project-helpers; never edit it).
+#
+#   python3 scripts/weirdnet_release.py --dry-run "Short summary"   # then without --dry-run
+#
+# The push of tag vX.Y.Z runs .github/workflows/release.yml, which builds the .deb and tar.gz
+# files and creates the GitHub release with `weirdnet_release.py github X.Y.Z`.
+#
+# A release pins weirdnet-net from crates.io (AGENTS.md: apps track Weirdnet main through git
+# during development). Until weirdnet-net 0.2.0 is on crates.io, Cargo.toml keeps the git
+# dependency and no relay release can be cut; then switch it and add a [[requires]] entry.
+helpers = "0.3.0"
+project = "weirdnet-relay"
+timezone = "America/New_York"
+next = [
+  "watch the Release workflow: gh run list -R WeirdBrains/weirdnet-relay --workflow release.yml -L 1",
+  "check the files: python3 scripts/weirdnet_release.py assets {version}",
+]
+
+[[files]]
+kind = "cargo-package"
+path = "Cargo.toml"
+primary = true
+
+[[files]]
+kind = "cargo-lock"
+path = "Cargo.lock"
+
+[changelog]
+path = "CHANGELOG.md"
+default_section = "Added"
+
+[checks]
+commands = [
+  "cargo fmt --check",
+  "cargo clippy --locked --all-targets -- -D warnings",
+  "cargo test --locked",
+  "cargo build --locked --release",
+]
+
+[crates]
+publish = ["."]
+
+[[platforms]]
+os = "linux"
+arch = ["x86_64", "aarch64"]
+formats = ["deb", "tar.gz"]
+channels = ["github"]
+assets = [
+  "weirdnet-relay_{debver}-1_amd64.deb",
+  "weirdnet-relay_{debver}-1_arm64.deb",
+  "weirdnet-relay-{version}-x86_64-linux.tar.gz",
+  "weirdnet-relay-{version}-aarch64-linux.tar.gz",
+  "SHA256SUMS",
+]
+
+[[platforms]]
+os = "macos"
+opt_out = "a relay server run under systemd; no macOS service packaging yet"
+
+[[platforms]]
+os = "windows"
+opt_out = "a relay server run under systemd; no Windows service packaging yet"
+
+[[platforms]]
+os = "android"
+opt_out = "a server; no mobile app"
+
+[[platforms]]
+os = "ios"
+opt_out = "a server; no mobile app"
+
+# Used by the Release workflow once the files are in dist/.
+[github]
+files = [
+  "dist/weirdnet-relay_{debver}-1_amd64.deb",
+  "dist/weirdnet-relay_{debver}-1_arm64.deb",
+  "dist/weirdnet-relay-{version}-x86_64-linux.tar.gz",
+  "dist/weirdnet-relay-{version}-aarch64-linux.tar.gz",
+]
+sums = "SHA256SUMS"
+notes = "weirdnet-relay {version}"
