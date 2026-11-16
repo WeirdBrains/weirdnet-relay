@@ -1,7 +1,7 @@
 name: CI
 on:
+  # every branch, so a branch is checked before main is moved to it
   push:
-    branches: [main]
   pull_request:
 env:
   CARGO_TERM_COLOR: always
