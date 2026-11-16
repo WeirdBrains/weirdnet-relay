@@ -53,6 +53,9 @@ pub struct RelayInfo {
     /// Whether the relay forwards public HTTPS for registered sites (SNI passthrough).
     #[serde(default)]
     pub forwarding: bool,
+    /// Whether the relay carries wakes for phones on `/weirdnet/wake/1`.
+    #[serde(default)]
+    pub wake: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -174,11 +177,15 @@ impl RelayInfo {
                 generated_at: now,
             },
             forwarding: cfg.forwarding.enabled,
+            wake: cfg.wake.enabled,
         }
         .with_forwarding_protocol()
     }
 
     fn with_forwarding_protocol(mut self) -> Self {
+        if self.wake {
+            self.protocols.push(weirdnet_push::relaywake::PROTOCOL.into());
+        }
         if self.forwarding {
             self.protocols.push(weirdnet_net::ingress::GRANT_PROTOCOL.into());
         }

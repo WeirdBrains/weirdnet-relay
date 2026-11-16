@@ -54,6 +54,7 @@ pub struct Relay {
     store: Arc<Store>,
     info: InfoHandle,
     ingress: Option<Ingress>,
+    wake: Option<crate::wake::WakeService>,
 }
 
 impl Relay {
@@ -63,8 +64,8 @@ impl Relay {
         Self::start_opts(cfg, store, true)
     }
 
-    /// [`Relay::start`], optionally without taking ports 443 and 80 for forwarding (to print
-    /// the info document beside a running relay).
+    /// [`Relay::start`], optionally without serving (taking ports 443 and 80 for forwarding,
+    /// accepting wake streams), to print the info document beside a running relay.
     pub fn start_opts(cfg: Config, store: Store, forward: bool) -> Result<Relay> {
         cfg.validate()?;
         let store = Arc::new(store);
@@ -82,7 +83,8 @@ impl Relay {
         } else {
             None
         };
-        let relay = Relay { cfg, node, store, info, ingress };
+        let wake = if forward && cfg.wake.enabled { Some(crate::wake::WakeService::start(&cfg.wake, &node)?) } else { None };
+        let relay = Relay { cfg, node, store, info, ingress, wake };
         relay.refresh();
         let i = relay.info.get();
         tracing::info!(peer_id = %i.peer_id, addrs = ?i.addrs, "relay started");
@@ -117,6 +119,11 @@ impl Relay {
         info
     }
 
+    /// The wake path, when on.
+    pub fn wake(&self) -> Option<&crate::wake::WakeService> {
+        self.wake.as_ref()
+    }
+
     /// The forwarding ingress, when on.
     pub fn ingress(&self) -> Option<&Ingress> {
         self.ingress.as_ref()
@@ -142,7 +149,8 @@ impl Relay {
         self.node.running()
     }
 
-    pub fn stop(self) {
+    pub fn stop(mut self) {
+        drop(self.wake.take());
         self.node.stop();
     }
 }

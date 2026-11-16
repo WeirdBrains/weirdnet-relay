@@ -74,6 +74,19 @@ http = "[::]:80"     # "" for none
 # Names this machine serves itself, passed untouched (the info page's TLS proxy, say):
 # local = { "relay.example.com" = "127.0.0.1:8443" }
 
+[wake]
+# The wake path for phones without APNs or FCM (F-Droid, sideloaded Android): devices that
+# opted in keep a stream open on /weirdnet/wake/1, and trusted peers deliver sealed wake
+# payloads here. The relay can't read them and keeps nothing on disk.
+enabled = true
+# Follow a push service's relay announcements too, so its wakes reach phones behind NAT:
+# push = "https://push.weirdbrains.com"
+# push_token_file = "/run/credentials/weirdnet-relay.service/push-token"   # `weirdnet-push relay-token`
+max_subscribers = 100000
+hold_secs = 120        # wakes wait this long for a phone that just dropped off
+max_per_minute = 30    # per handle; more are dropped (battery protection)
+keepalive_secs = 60
+
 [log]
 format = "pretty"   # or "json"
 level = "info"

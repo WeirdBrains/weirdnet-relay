@@ -111,6 +111,16 @@ on the host, each name needs its owner's signed grant and a `_weirdnet.<name>` D
 and `revoke-site` stops a site. Both are off by default; see DEPLOY.md (step 7) and
 [examples/relay.toml](examples/relay.toml).
 
+## Waking phones
+
+`[wake]` (on by default) carries wakes for phones that can't use APNs or FCM. A phone that
+opted in keeps a stream open to its home relay on `/weirdnet/wake/1` and subscribes its wake
+handles; trusted peers deliver sealed, fixed-size payloads, and with `push` and
+`push_token_file` set the relay also follows a push service's relay announcements. The relay
+passes payloads on unread, holds them briefly for a phone that just dropped off, and caps
+wakes per handle. The protocol is in
+[weirdnet-push](https://github.com/WeirdBrains/weirdnet-push) (`relaywake`).
+
 ## The info document
 
     curl -s https://relay.example.com/.well-known/weirdnet-relay.json

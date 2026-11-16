@@ -35,6 +35,7 @@ pub struct Config {
     pub http: Http,
     pub wss: Wss,
     pub forwarding: Forwarding,
+    pub wake: Wake,
     pub log: Log,
 }
 
@@ -69,6 +70,40 @@ pub struct Forwarding {
     /// Names served on this machine itself, passed untouched to a local address: the info
     /// page's TLS proxy, say (`"relay.example.com" = "127.0.0.1:8443"`).
     pub local: std::collections::BTreeMap<String, String>,
+}
+
+/// The relay wake path (`/weirdnet/wake/1`) for phones without APNs or FCM.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Wake {
+    pub enabled: bool,
+    /// A push service to follow for relay announcements (`https://push.weirdbrains.com`);
+    /// empty: only wakes that peers deliver here.
+    pub push: String,
+    /// The relay token for `push` (from `weirdnet-push relay-token`), one line.
+    pub push_token_file: Option<PathBuf>,
+    /// Devices subscribed at once.
+    pub max_subscribers: usize,
+    /// How long wakes wait for a device that just dropped off.
+    pub hold_secs: u64,
+    /// Wakes per handle per minute; more are dropped (battery protection).
+    pub max_per_minute: u32,
+    /// How often subscribed devices get a keepalive.
+    pub keepalive_secs: u64,
+}
+
+impl Default for Wake {
+    fn default() -> Self {
+        Wake {
+            enabled: true,
+            push: String::new(),
+            push_token_file: None,
+            max_subscribers: 100_000,
+            hold_secs: 120,
+            max_per_minute: 30,
+            keepalive_secs: 60,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -141,6 +176,7 @@ impl Default for Config {
             http: Http::default(),
             wss: Wss::default(),
             forwarding: Forwarding::default(),
+            wake: Wake::default(),
             log: Log::default(),
         }
     }
@@ -289,6 +325,22 @@ impl Config {
         if self.forwarding.enabled {
             self.forwarding_addrs()?;
             self.forwarding_local()?;
+        }
+        if self.wake.enabled {
+            let w = &self.wake;
+            if !(10..=600).contains(&w.keepalive_secs) {
+                return Err(Error::Config("wake.keepalive_secs: 10 to 600".into()));
+            }
+            if w.hold_secs > 3600 || w.max_per_minute == 0 || w.max_subscribers == 0 {
+                return Err(Error::Config("wake: hold_secs up to 3600, max_per_minute and max_subscribers at least 1".into()));
+            }
+            let local = ["http://127.0.0.1", "http://localhost", "http://[::1]"].iter().any(|p| w.push.starts_with(p));
+            if !w.push.is_empty() && !w.push.starts_with("https://") && !local {
+                return Err(Error::Config("wake.push: an https:// URL (plain http only on loopback)".into()));
+            }
+            if !w.push.is_empty() && w.push_token_file.is_none() {
+                return Err(Error::Config("wake.push needs push_token_file".into()));
+            }
         }
         if !matches!(self.log.format.as_str(), "pretty" | "json") {
             return Err(Error::Config("log.format: `pretty` or `json`".into()));

@@ -6,6 +6,11 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The wake path for phones without APNs or FCM, with an optional push service to follow.
+- The info document says whether the relay carries wakes.
+
 ## [0.2.0] - 2026-11-16
 
 ### Added

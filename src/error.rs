@@ -14,6 +14,8 @@ pub enum Error {
     Net(#[from] NetError),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error("wake: {0}")]
+    Wake(String),
     #[error("info document: {0}")]
     Info(String),
 }
