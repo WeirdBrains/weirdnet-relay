@@ -54,9 +54,9 @@ SQLCipher database. Its key is 32 bytes, written as 64 hex characters (or 32 raw
 file. The relay looks, in order, at `db_key_file` / `--db-key-file`, then the systemd
 credential `$CREDENTIALS_DIRECTORY/db-key`. With systemd:
 
-    weirdnet-relay gen-key | systemd-creds encrypt --name=db-key - /etc/credstore.encrypted/weirdnet-relay.db-key
+    weirdnet-relay gen-key | systemd-creds encrypt --name=db-key - /etc/weirdnet-relay/db-key.cred
 
-and the unit's `LoadCredentialEncrypted=db-key:/etc/credstore.encrypted/weirdnet-relay.db-key`
+and the unit's `LoadCredentialEncrypted=db-key:/etc/weirdnet-relay/db-key.cred`
 hands it to the service. Lose the key and the relay gets a new peer id; keep a copy offline.
 
 ## systemd

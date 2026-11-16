@@ -1,9 +1,9 @@
 # weirdnet-relay: a relay and bootstrap node for the Weirdnet network.
 #
 # Install:
-#   install -m 0755 weirdnet-relay /usr/local/bin/
+#   install -m 0755 weirdnet-relay /usr/bin/
 #   install -D -m 0644 relay.toml /etc/weirdnet-relay/relay.toml
-#   weirdnet-relay gen-key | systemd-creds encrypt --name=db-key - /etc/credstore.encrypted/weirdnet-relay.db-key
+#   weirdnet-relay gen-key | systemd-creds encrypt --name=db-key - /etc/weirdnet-relay/db-key.cred
 #   install -m 0644 weirdnet-relay.service /etc/systemd/system/ && systemctl daemon-reload
 #   systemctl enable --now weirdnet-relay
 #
@@ -19,12 +19,12 @@ After=network-online.target
 
 [Service]
 Type=exec
-ExecStart=/usr/local/bin/weirdnet-relay --config /etc/weirdnet-relay/relay.toml run
+ExecStart=/usr/bin/weirdnet-relay --config /etc/weirdnet-relay/relay.toml run
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=20s
 
-LoadCredentialEncrypted=db-key:/etc/credstore.encrypted/weirdnet-relay.db-key
+LoadCredentialEncrypted=db-key:/etc/weirdnet-relay/db-key.cred
 # LoadCredential=db-key:/etc/weirdnet-relay/db-key
 
 DynamicUser=yes
