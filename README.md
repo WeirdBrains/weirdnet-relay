@@ -44,12 +44,15 @@ lists the same addresses. Abuse reports: michael+relay@weirdbrains.com.
 
 ## Install
 
-On Debian 12+ and Ubuntu 24.04+, install the `.deb` from a
-[release](https://github.com/WeirdBrains/weirdnet-relay/releases) (amd64 and arm64), or build it
-with `cargo deb` (cargo-deb). It installs the binary, the systemd unit and
-`/etc/weirdnet-relay/relay.toml`, and starts nothing until the database key credential exists.
-[DEPLOY.md](DEPLOY.md) has the steps. Each release also has `tar.gz` builds for x86_64 and
-aarch64 Linux.
+Each [release](https://github.com/WeirdBrains/weirdnet-relay/releases) has packages for x86_64
+and aarch64: a `.deb` (Debian 12+, Ubuntu 24.04+: `apt-get install`), an `.rpm` (Fedora, RHEL
+and openSUSE: `dnf install` or `zypper install`) and an Arch `.pkg.tar.zst` (`pacman -U`), plus
+`tar.gz` builds. On Arch the recipe is also on
+[TAUR](https://pkg.taur.weirdbrains.com/packages/weirdnet-relay), for paru or yay. Every package
+installs the binary, the hardened systemd unit and `/etc/weirdnet-relay/relay.toml` (kept on
+upgrade), and starts nothing until the database key credential exists.
+[DEPLOY.md](DEPLOY.md) has the steps for each distro. The `.rpm` and Arch packages start with
+0.1.1.
 
 ## Quick start
 
@@ -125,6 +128,10 @@ publish the page. `v` only changes on a breaking change.
 
     cargo build --release
     cargo deb --locked -o dist/      # the .deb (needs cargo-deb and dpkg-dev)
+    packaging/tarball.sh VERSION x86_64
+    packaging/rpm/build.sh VERSION x86_64      # on Fedora, with rpm-build
+    packaging/arch/build.sh VERSION x86_64     # on Arch, with base-devel; also the TAUR recipe
+    packaging/test-install.sh rpm|arch FILE    # the install test CI runs in containers
 
 Releases go through the shared WeirdBrains release script, `scripts/weirdnet_release.py`
 (configured in `release.toml`); the Release workflow builds the packages for the tag and

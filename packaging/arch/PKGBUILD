@@ -1,0 +1,35 @@
+# Maintainer: m3talsmith <m3talsmith@gmail.com>
+# weirdnet-relay for Arch Linux and TAUR (https://pkg.taur.weirdbrains.com): installs the prebuilt
+# binary from the GitHub release tarball; nothing is compiled. This committed copy is a template:
+# packaging/arch/recipe.py sets pkgver and fills the sha256sums from a release's tarballs. The
+# Release workflow builds the .pkg.tar.zst files from that recipe and attaches the recipe as
+# weirdnet-relay-VERSION-taur.tar.gz; `weirdnet_release.py taur VERSION` uploads it to TAUR.
+pkgname=weirdnet-relay
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Weirdnet relay and bootstrap node (libp2p circuit relay v2, Kademlia, names server)'
+arch=('x86_64' 'aarch64')
+url='https://github.com/WeirdBrains/weirdnet-relay'
+license=('BSD-3-Clause')
+depends=('glibc' 'gcc-libs' 'systemd')
+backup=('etc/weirdnet-relay/relay.toml')
+options=('!strip' '!debug' '!lto')
+install=weirdnet-relay.install
+source_x86_64=("https://github.com/WeirdBrains/weirdnet-relay/releases/download/v${pkgver}/weirdnet-relay-${pkgver}-x86_64-linux.tar.gz")
+source_aarch64=("https://github.com/WeirdBrains/weirdnet-relay/releases/download/v${pkgver}/weirdnet-relay-${pkgver}-aarch64-linux.tar.gz")
+sha256sums_x86_64=('UPSTREAM_TARBALL_SHA256')
+sha256sums_aarch64=('UPSTREAM_TARBALL_SHA256')
+
+package() {
+  cd "${srcdir}/weirdnet-relay-${pkgver}-${CARCH}-linux"
+
+  install -Dm755 weirdnet-relay "${pkgdir}/usr/bin/weirdnet-relay"
+  install -Dm644 systemd/weirdnet-relay.service "${pkgdir}/usr/lib/systemd/system/weirdnet-relay.service"
+  install -Dm644 relay.toml "${pkgdir}/etc/weirdnet-relay/relay.toml"
+
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/weirdnet-relay/LICENSE"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/weirdnet-relay/README.md"
+  install -Dm644 DEPLOY.md "${pkgdir}/usr/share/doc/weirdnet-relay/DEPLOY.md"
+  install -Dm644 CHANGELOG.md "${pkgdir}/usr/share/doc/weirdnet-relay/CHANGELOG.md"
+  install -Dm644 examples/relay.toml "${pkgdir}/usr/share/doc/weirdnet-relay/examples/relay.toml"
+}

@@ -6,6 +6,15 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- RPM and Arch Linux packages for x86_64 and aarch64, and the Arch recipe on TAUR.
+- Install steps for apt, dnf, zypper, pacman and TAUR.
+
+### Changed
+
+- Release tarballs hold the packaged config, with the full example under examples/.
+
 ## [0.1.0] - 2026-11-16
 
 ### Added

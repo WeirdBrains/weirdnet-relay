@@ -3,8 +3,9 @@
 #
 #   python3 scripts/weirdnet_release.py --dry-run "Short summary"   # then without --dry-run
 #
-# The push of tag vX.Y.Z runs .github/workflows/release.yml, which builds the .deb and tar.gz
-# files and creates the GitHub release with `weirdnet_release.py github X.Y.Z`.
+# The push of tag vX.Y.Z runs .github/workflows/release.yml, which builds the tar.gz, .deb, .rpm
+# and .pkg.tar.zst files (x86_64 and aarch64), install-tests them, and creates the GitHub release
+# with `weirdnet_release.py github X.Y.Z`. Then the recipe goes to TAUR (see next).
 #
 # weirdnet-net is released first from its own repo; the relay pins the published version.
 helpers = "0.3.2"
@@ -13,6 +14,7 @@ timezone = "America/New_York"
 next = [
   "watch the Release workflow: gh run list -R WeirdBrains/weirdnet-relay --workflow release.yml -L 1",
   "check the files: python3 scripts/weirdnet_release.py assets {version}",
+  "TAUR (skip if the Release workflow's taur job uploaded it): python3 scripts/weirdnet_release.py taur {version} --dry-run, then without --dry-run",
 ]
 
 [[files]]
@@ -50,11 +52,16 @@ publish = ["."]
 [[platforms]]
 os = "linux"
 arch = ["x86_64", "aarch64"]
-formats = ["deb", "tar.gz"]
-channels = ["github"]
+formats = ["deb", "rpm", "pkg.tar.zst", "tar.gz"]
+channels = ["github", "taur"]
 assets = [
   "weirdnet-relay_{debver}-1_amd64.deb",
   "weirdnet-relay_{debver}-1_arm64.deb",
+  "weirdnet-relay-{debver}-1.x86_64.rpm",
+  "weirdnet-relay-{debver}-1.aarch64.rpm",
+  "weirdnet-relay-{pkgver}-1-x86_64.pkg.tar.zst",
+  "weirdnet-relay-{pkgver}-1-aarch64.pkg.tar.zst",
+  "weirdnet-relay-{pkgver}-taur.tar.gz",
   "weirdnet-relay-{version}-x86_64-linux.tar.gz",
   "weirdnet-relay-{version}-aarch64-linux.tar.gz",
   "SHA256SUMS",
@@ -76,11 +83,28 @@ opt_out = "a server; no mobile app"
 os = "ios"
 opt_out = "a server; no mobile app"
 
+# The Arch recipe for TAUR (https://pkg.taur.weirdbrains.com), written for the release by
+# packaging/arch/recipe.py with the sha256sums of the published tarballs (the committed
+# packaging/arch/PKGBUILD is a template). Needs `taurctl login` (TAUR_SERVER set to the server).
+[taur]
+org = "WeirdBrains"
+
+[[taur.packages]]
+name = "weirdnet-relay"
+dir = "{work}/weirdnet-relay"
+prepare = ["python3 packaging/arch/recipe.py {version} {work}/weirdnet-relay"]
+srcinfo = "generate"
+
 # Used by the Release workflow once the files are in dist/.
 [github]
 files = [
   "dist/weirdnet-relay_{debver}-1_amd64.deb",
   "dist/weirdnet-relay_{debver}-1_arm64.deb",
+  "dist/weirdnet-relay-{debver}-1.x86_64.rpm",
+  "dist/weirdnet-relay-{debver}-1.aarch64.rpm",
+  "dist/weirdnet-relay-{pkgver}-1-x86_64.pkg.tar.zst",
+  "dist/weirdnet-relay-{pkgver}-1-aarch64.pkg.tar.zst",
+  "dist/weirdnet-relay-{pkgver}-taur.tar.gz",
   "dist/weirdnet-relay-{version}-x86_64-linux.tar.gz",
   "dist/weirdnet-relay-{version}-aarch64-linux.tar.gz",
 ]

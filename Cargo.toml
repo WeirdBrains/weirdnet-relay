@@ -61,7 +61,7 @@ conf-files = ["/etc/weirdnet-relay/relay.toml"]
 assets = [
   ["target/release/weirdnet-relay", "usr/bin/", "755"],
   ["packaging/systemd/weirdnet-relay.service", "usr/lib/systemd/system/", "644"],
-  ["packaging/deb/relay.toml", "etc/weirdnet-relay/relay.toml", "644"],
+  ["packaging/relay.toml", "etc/weirdnet-relay/relay.toml", "644"],
   ["examples/relay.toml", "usr/share/doc/weirdnet-relay/examples/relay.toml", "644"],
   ["README.md", "usr/share/doc/weirdnet-relay/", "644"],
   ["DEPLOY.md", "usr/share/doc/weirdnet-relay/", "644"],

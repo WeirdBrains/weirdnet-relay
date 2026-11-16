@@ -1,0 +1,40 @@
+# weirdnet-relay: start the service only once its database key credential exists.
+_key=/etc/weirdnet-relay/db-key.cred
+
+_hint() {
+  cat <<MSG
+weirdnet-relay is installed but not started: it needs its database key first.
+  weirdnet-relay gen-key | sudo systemd-creds encrypt --name=db-key - ${_key}
+  sudo \$EDITOR /etc/weirdnet-relay/relay.toml
+  sudo systemctl enable --now weirdnet-relay
+See /usr/share/doc/weirdnet-relay/DEPLOY.md.
+MSG
+}
+
+post_install() {
+  if [ -f "${_key}" ] && [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl enable --now weirdnet-relay.service || true
+  else
+    _hint
+  fi
+}
+
+post_upgrade() {
+  if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl try-restart weirdnet-relay.service >/dev/null 2>&1 || true
+  fi
+}
+
+pre_remove() {
+  if [ -d /run/systemd/system ]; then
+    systemctl disable --now weirdnet-relay.service >/dev/null 2>&1 || true
+  fi
+}
+
+post_remove() {
+  # The database key credential and the relay's state (/var/lib/private/weirdnet-relay,
+  # its peer id) are kept; a modified relay.toml is left as relay.toml.pacsave.
+  :
+}

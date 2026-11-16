@@ -1,4 +1,4 @@
-# /etc/weirdnet-relay/relay.toml: weirdnet-relay's configuration (installed by the .deb).
+# /etc/weirdnet-relay/relay.toml: weirdnet-relay's configuration (installed by the package).
 # Every key is optional; see /usr/share/doc/weirdnet-relay/examples/relay.toml for all of them
 # and /usr/share/doc/weirdnet-relay/DEPLOY.md for the steps. The service does not start until
 # the database key exists as /etc/weirdnet-relay/db-key.cred.

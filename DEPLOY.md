@@ -7,19 +7,47 @@ server with systemd 250 or newer (for `systemd-creds`).
 Status: **live** since 2026-11-16 (https://relay.net.weirdbrains.com/). Peer id
 `12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB`.
 
-## 1. Install the .deb
+## 1. Install the package
 
-Each release on https://github.com/WeirdBrains/weirdnet-relay/releases carries
-`weirdnet-relay_<version>-1_amd64.deb` and `_arm64.deb` (Debian 12+, Ubuntu 24.04+: systemd 250 or newer), a
-`SHA256SUMS` file and, when signed, `SHA256SUMS.minisig`:
+Each release on https://github.com/WeirdBrains/weirdnet-relay/releases carries packages for
+x86_64 and aarch64, a `SHA256SUMS` file and, when signed, `SHA256SUMS.minisig`. They all need
+systemd 250 or newer (for `systemd-creds`). The `.rpm` and Arch packages start with 0.1.1.
 
-    V=0.1.0; ARCH=$(dpkg --print-architecture)
+Fetch and check a file (set `V` and the file name from the list below):
+
+    V=$(curl -fsSL https://api.github.com/repos/WeirdBrains/weirdnet-relay/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
     BASE=https://github.com/WeirdBrains/weirdnet-relay/releases/download/v$V
-    curl -fLO $BASE/weirdnet-relay_$V-1_$ARCH.deb -O $BASE/SHA256SUMS
+    curl -fLO $BASE/FILE -O $BASE/SHA256SUMS
     sha256sum --check --ignore-missing SHA256SUMS
-    sudo apt-get install ./weirdnet-relay_$V-1_$ARCH.deb
 
-Until the first release is out, build the same package from source:
+**Debian 12+, Ubuntu 24.04+ (apt).** `weirdnet-relay_$V-1_amd64.deb` or `_arm64.deb`:
+
+    sudo apt-get install ./weirdnet-relay_$V-1_$(dpkg --print-architecture).deb
+
+**Fedora, RHEL 9+ and clones (dnf); openSUSE (zypper).** `weirdnet-relay-$V-1.x86_64.rpm`
+or `.aarch64.rpm`. The packages are not GPG-signed; check `SHA256SUMS` (and its minisig) first:
+
+    sudo dnf install ./weirdnet-relay-$V-1.$(uname -m).rpm
+    sudo zypper install --allow-unsigned-rpm ./weirdnet-relay-$V-1.$(uname -m).rpm
+
+**Arch Linux, Omarchy (pacman).** From TAUR, the WeirdBrains Arch user repository
+(https://pkg.taur.weirdbrains.com/packages/weirdnet-relay), with an AUR helper (not as root):
+
+    paru --aururl https://pkg.taur.weirdbrains.com --aurrpcurl https://pkg.taur.weirdbrains.com/rpc -S weirdnet-relay
+    yay --aururl https://pkg.taur.weirdbrains.com --aurrpcurl 'https://pkg.taur.weirdbrains.com/rpc?' -S weirdnet-relay
+
+or by hand (`git clone https://pkg.taur.weirdbrains.com/weirdnet-relay.git && cd weirdnet-relay
+&& makepkg -si`), or install the release's built package directly:
+
+    sudo pacman -U ./weirdnet-relay-$V-1-$(uname -m).pkg.tar.zst
+
+The recipe installs the prebuilt binary from the release tarball; nothing is compiled.
+
+**Other Linux.** `weirdnet-relay-$V-x86_64-linux.tar.gz` or `-aarch64-linux.tar.gz` has the
+binary, `systemd/weirdnet-relay.service`, the packaged `relay.toml` and `examples/relay.toml`.
+Copy them to the paths below.
+
+**From source** (Debian/Ubuntu), the same .deb:
 
     sudo apt-get install -y build-essential pkg-config perl git curl dpkg-dev
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -29,12 +57,13 @@ Until the first release is out, build the same package from source:
     cargo deb --locked -o dist/
     sudo apt-get install ./dist/weirdnet-relay_*.deb
 
-The package installs:
+Every package installs the same files:
 
 - `/usr/bin/weirdnet-relay`
 - `/usr/lib/systemd/system/weirdnet-relay.service`: the hardened unit (`DynamicUser=yes`,
   state in `/var/lib/weirdnet-relay`, made by systemd on first start)
-- `/etc/weirdnet-relay/relay.toml`: a starting config, kept across upgrades
+- `/etc/weirdnet-relay/relay.toml`: a starting config, kept across upgrades (a conffile,
+  `%config(noreplace)` or pacman `backup`)
 - `/usr/share/doc/weirdnet-relay/`: this guide, the README and the full example config
 
 It does **not** start the relay: the unit only starts once `/etc/weirdnet-relay/db-key.cred`
@@ -123,12 +152,15 @@ them all then.
 
 ## Updating
 
-Install the new release's .deb the same way (`sudo apt-get install ./weirdnet-relay_….deb`).
-The package restarts a running relay; the database and its key carry over and the peer id
-stays the same. `/etc/weirdnet-relay/relay.toml` is a conffile: your edits are kept.
+Install the new release's package the same way (`apt-get install`, `dnf install`,
+`zypper install`, `pacman -U`, or `paru -Syu` / `yay -Syu` with the TAUR flags above). The
+package restarts a running relay; the database and its key carry over and the peer id stays
+the same. Your edits to `/etc/weirdnet-relay/relay.toml` are kept (pacman and rpm write the
+new default next to it as `relay.toml.pacnew` or `relay.toml.rpmnew` when both changed).
 
 ## Removing
 
-`sudo apt-get remove weirdnet-relay` stops and disables the service. `purge` also drops
-`relay.toml` but keeps `/etc/weirdnet-relay/db-key.cred` and the relay's state
+`sudo apt-get remove weirdnet-relay` (`dnf remove`, `zypper remove`, `pacman -R`) stops and
+disables the service. apt's `purge` also drops `relay.toml`; rpm and pacman keep a changed one
+as `relay.toml.rpmsave` or `relay.toml.pacsave`. All of them keep `/etc/weirdnet-relay/db-key.cred` and the relay's state
 (`/var/lib/private/weirdnet-relay`); delete those yourself only if the peer id should go too.

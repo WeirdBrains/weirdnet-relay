@@ -34,3 +34,27 @@ jobs:
           sudo systemctl start weirdnet-relay.service
           if systemctl is-active --quiet weirdnet-relay.service; then echo "::error::started without db-key.cred"; exit 1; fi
           sudo apt-get purge -y weirdnet-relay
+  # rpm and Arch packages from the same release build, install-tested in Fedora and Arch containers.
+  packages:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked --release
+      - name: Build
+        run: |
+          V=$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "V=$V" >> "$GITHUB_ENV"
+          packaging/tarball.sh "$V" x86_64
+          # aarch64 packages from the same tarball renamed: this checks the packaging, not the binary.
+          cp "dist/weirdnet-relay-$V-x86_64-linux.tar.gz" /tmp/t.tgz
+          mkdir /tmp/a && tar -C /tmp/a -xzf /tmp/t.tgz && mv "/tmp/a/weirdnet-relay-$V-x86_64-linux" "/tmp/a/weirdnet-relay-$V-aarch64-linux"
+          tar -C /tmp/a -czf "dist/weirdnet-relay-$V-aarch64-linux.tar.gz" "weirdnet-relay-$V-aarch64-linux"
+          docker run --rm -v "$PWD:/src" -w /src fedora:latest sh -c "dnf install -y -q rpm-build && packaging/rpm/build.sh $V x86_64 aarch64"
+          docker run --rm -v "$PWD:/src" -w /src archlinux:latest sh -c "pacman -Syu --noconfirm --needed -q base-devel python && packaging/arch/build.sh $V x86_64 aarch64"
+          ls -l dist
+      - name: Install test (Fedora)
+        run: docker run --rm -v "$PWD:/src" -w /src fedora:latest packaging/test-install.sh rpm "dist/weirdnet-relay-$V-1.x86_64.rpm"
+      - name: Install test (Arch)
+        run: docker run --rm -v "$PWD:/src" -w /src archlinux:latest packaging/test-install.sh arch "dist/weirdnet-relay-$V-1-x86_64.pkg.tar.zst"
+      - run: tar -tzvf dist/weirdnet-relay-*-taur.tar.gz

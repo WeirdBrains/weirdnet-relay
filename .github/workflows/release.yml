@@ -1,6 +1,8 @@
 name: Release
-# Builds the .deb and tar.gz files for a release tag and creates the GitHub release with the
-# shared release script (`weirdnet_release.py github`). Runs on a pushed v* tag (made by
+# Builds the tar.gz, .deb, .rpm and Arch .pkg.tar.zst files (x86_64 and aarch64) for a release
+# tag, install-tests them (Ubuntu with systemd, Fedora and Arch containers), creates the GitHub
+# release with the shared release script (`weirdnet_release.py github`), then uploads the Arch
+# recipe to TAUR when the TAUR_TOKEN secret is set. Runs on a pushed v* tag (made by
 # `python3 scripts/weirdnet_release.py`) or by hand for an existing tag.
 on:
   push:
@@ -41,11 +43,7 @@ jobs:
       - name: Package
         run: |
           cargo deb --no-build -o dist/
-          T=weirdnet-relay-$V-${{ matrix.arch }}-linux
-          mkdir -p "$T/systemd"
-          cp target/release/weirdnet-relay README.md DEPLOY.md CHANGELOG.md LICENSE examples/relay.toml "$T/"
-          cp packaging/systemd/weirdnet-relay.service "$T/systemd/"
-          tar -czf "dist/$T.tar.gz" "$T"
+          packaging/tarball.sh "$V" ${{ matrix.arch }}
           ls -l dist
       - name: Install test
         run: |
@@ -67,8 +65,55 @@ jobs:
           name: dist-${{ matrix.arch }}
           path: dist/*
 
-  release:
+  # rpm and pkg.tar.zst for both arches from the tarballs (nothing is compiled), x86_64 install tests.
+  packages:
     needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - name: Build
+        run: |
+          V="${VERSION#v}"
+          docker run --rm -v "$PWD:/src" -w /src fedora:latest sh -c "dnf install -y -q rpm-build && packaging/rpm/build.sh $V x86_64 aarch64"
+          docker run --rm -v "$PWD:/src" -w /src archlinux:latest sh -c "pacman -Syu --noconfirm --needed -q base-devel python && packaging/arch/build.sh $V x86_64 aarch64"
+          sudo chown -R "$(id -u)" dist
+          ls -l dist
+      - name: Install test (Fedora, Arch)
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src fedora:latest packaging/test-install.sh rpm dist/weirdnet-relay-*.x86_64.rpm
+          docker run --rm -v "$PWD:/src" -w /src archlinux:latest packaging/test-install.sh arch dist/weirdnet-relay-*-x86_64.pkg.tar.zst
+          docker run --rm -v "$PWD:/src" -w /src archlinux:latest sh -c 'pacman -Qip dist/*-aarch64.pkg.tar.zst | grep -q "^Architecture *: aarch64"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: |
+            dist/*.rpm
+            dist/*.pkg.tar.zst
+            dist/*-taur.tar.gz
+
+  # The aarch64 rpm installs on ARM (there is no official arm64 archlinux image).
+  packages-arm:
+    needs: packages
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: packages
+          path: dist
+      - run: docker run --rm -v "$PWD:/src" -w /src fedora:latest packaging/test-install.sh rpm dist/weirdnet-relay-*.aarch64.rpm
+
+  release:
+    needs: [build, packages, packages-arm]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -78,7 +123,6 @@ jobs:
           ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
       - uses: actions/download-artifact@v5
         with:
-          pattern: dist-*
           path: dist
           merge-multiple: true
       - name: GitHub release
@@ -103,3 +147,33 @@ jobs:
           printf '%s\n' "$MINISIGN_PASSWORD" | minisign -S -s "$RUNNER_TEMP/minisign.key" -m sig/SHA256SUMS -t "weirdnet-relay $TAG"
           rm -f "$RUNNER_TEMP/minisign.key"
           gh release upload "$TAG" sig/SHA256SUMS.minisig --clobber
+
+  # The Arch recipe to TAUR (https://pkg.taur.weirdbrains.com) as the WeirdBrains org. Needs the
+  # TAUR_TOKEN secret: a taurctl session token for an account in that org (sessions last 30 days).
+  # Without it this is skipped; publish by hand: python3 scripts/weirdnet_release.py taur VERSION.
+  taur:
+    needs: release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
+      - name: Upload the recipe
+        env:
+          TAUR_TOKEN: ${{ secrets.TAUR_TOKEN }}
+          TAUR_SERVER: https://pkg.taur.weirdbrains.com
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$TAUR_TOKEN" ]; then
+            echo "::notice::TAUR_TOKEN is not set; upload the recipe with: python3 scripts/weirdnet_release.py taur ${VERSION#v}"
+            exit 0
+          fi
+          # taurctl from a pinned TAUR release.
+          T=taur-1.11.0-x86_64-unknown-linux-gnu.tar.gz
+          curl -fsSLO "https://github.com/WeirdBrains/taur/releases/download/v1.11.0/$T"
+          echo "434966750059e646b89e5dc3b24fd4db90435e2475901c7b379e7ed7a872a75e  $T" | sha256sum -c -
+          tar -xzf "$T" taur-1.11.0/taurctl
+          export PATH="$PWD/taur-1.11.0:$PATH" TAURCTL_CONFIG_DIR="$RUNNER_TEMP/taurctl"
+          mkdir -m 700 "$TAURCTL_CONFIG_DIR"
+          (umask 077; printf '%s' "$TAUR_TOKEN" > "$TAURCTL_CONFIG_DIR/token")
+          python3 scripts/weirdnet_release.py taur "${VERSION#v}" --yes
