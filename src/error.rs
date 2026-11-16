@@ -16,6 +16,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("wake: {0}")]
     Wake(String),
+    #[error("updates: {0}")]
+    Updates(String),
     #[error("info document: {0}")]
     Info(String),
 }

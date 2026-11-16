@@ -47,6 +47,13 @@ CREATE TABLE revoked_sites (
   revoked_at INTEGER NOT NULL
 );
 "#,
+    r#"
+CREATE TABLE update_envelopes (
+  id TEXT PRIMARY KEY,
+  envelope BLOB NOT NULL,
+  expires INTEGER NOT NULL
+);
+"#,
 ];
 
 /// A site this relay doesn't forward.
@@ -164,6 +171,25 @@ impl Store {
         let c = self.conn();
         let mut st = c.prepare("SELECT name, reason, revoked_at FROM revoked_sites ORDER BY name")?;
         let rows = st.query_map([], |r| Ok(RevokedSite { name: r.get(0)?, reason: r.get(1)?, revoked_at: r.get(2)? }))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    /// Keeps an update announcement or root rotation (CBOR envelope) under `id`, replacing
+    /// what was there.
+    pub fn put_update_envelope(&self, id: &str, envelope: &[u8], expires: i64) -> Result<()> {
+        self.conn().execute(
+            "INSERT INTO update_envelopes (id, envelope, expires) VALUES (?1, ?2, ?3) ON CONFLICT(id) DO UPDATE SET envelope = ?2, expires = ?3",
+            params![id, envelope, expires],
+        )?;
+        Ok(())
+    }
+
+    /// The kept envelopes that haven't expired at `now` (unix seconds), root rotations first.
+    pub fn update_envelopes(&self, now: i64) -> Result<Vec<Vec<u8>>> {
+        let c = self.conn();
+        c.execute("DELETE FROM update_envelopes WHERE expires <= ?1", [now])?;
+        let mut st = c.prepare("SELECT envelope FROM update_envelopes ORDER BY id NOT LIKE 'root:%', id")?;
+        let rows = st.query_map([], |r| r.get(0))?;
         Ok(rows.collect::<std::result::Result<_, _>>()?)
     }
 

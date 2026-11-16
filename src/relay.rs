@@ -50,11 +50,12 @@ impl Handler<Request, Response> for RelayHandler {
 
 pub struct Relay {
     cfg: Config,
-    node: Node<Request, Response>,
+    node: Arc<Node<Request, Response>>,
     store: Arc<Store>,
     info: InfoHandle,
     ingress: Option<Ingress>,
     wake: Option<crate::wake::WakeService>,
+    updates: Option<crate::updates::UpdatesService>,
 }
 
 impl Relay {
@@ -76,15 +77,20 @@ impl Relay {
         node_cfg.names_server = Some(weirdnet_net::names::Names(store.clone()));
         let info = InfoHandle::new(RelayInfo::build(&cfg, &peer, &Default::default(), &[], now_ms()));
         let handler = Arc::new(RelayHandler { store: store.clone(), info: info.clone() });
-        let node = Node::start(&RELAY_PROFILE, key, node_cfg, handler)?;
+        let node = Arc::new(Node::start(&RELAY_PROFILE, key, node_cfg, handler)?);
         let ingress = if forward && cfg.forwarding.enabled {
             let binding: Arc<dyn Binding> = Arc::new(DnsBinding::system()?);
-            Some(start_forwarding(&cfg, &node, &store, binding)?)
+            Some(start_forwarding(&cfg, &*node, &store, binding)?)
         } else {
             None
         };
-        let wake = if forward && cfg.wake.enabled { Some(crate::wake::WakeService::start(&cfg.wake, &node)?) } else { None };
-        let relay = Relay { cfg, node, store, info, ingress, wake };
+        let wake = if forward && cfg.wake.enabled { Some(crate::wake::WakeService::start(&cfg.wake, &*node)?) } else { None };
+        let updates = if forward && cfg.updates.enabled {
+            Some(crate::updates::UpdatesService::start(&cfg.updates, node.clone(), store.clone())?)
+        } else {
+            None
+        };
+        let relay = Relay { cfg, node, store, info, ingress, wake, updates };
         relay.refresh();
         let i = relay.info.get();
         tracing::info!(peer_id = %i.peer_id, addrs = ?i.addrs, "relay started");
@@ -124,6 +130,11 @@ impl Relay {
         self.wake.as_ref()
     }
 
+    /// Update announcements, when on.
+    pub fn updates(&self) -> Option<&crate::updates::UpdatesService> {
+        self.updates.as_ref()
+    }
+
     /// The forwarding ingress, when on.
     pub fn ingress(&self) -> Option<&Ingress> {
         self.ingress.as_ref()
@@ -151,7 +162,11 @@ impl Relay {
 
     pub fn stop(mut self) {
         drop(self.wake.take());
-        self.node.stop();
+        drop(self.updates.take());
+        self.node.halt();
+        if let Ok(node) = Arc::try_unwrap(self.node) {
+            node.stop();
+        }
     }
 }
 

@@ -36,6 +36,7 @@ pub struct Config {
     pub wss: Wss,
     pub forwarding: Forwarding,
     pub wake: Wake,
+    pub updates: Updates,
     pub log: Log,
 }
 
@@ -70,6 +71,46 @@ pub struct Forwarding {
     /// Names served on this machine itself, passed untouched to a local address: the info
     /// page's TLS proxy, say (`"relay.example.com" = "127.0.0.1:8443"`).
     pub local: std::collections::BTreeMap<String, String>,
+}
+
+/// Update announcements (`/weirdnet/updates/1`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Updates {
+    pub enabled: bool,
+    /// The orgs whose announcements this relay carries. Without any, it carries none.
+    pub roots: Vec<UpdateRoot>,
+    /// Relays to follow (full addresses with `/p2p/`), so announcements published there
+    /// reach devices here.
+    pub upstream: Vec<String>,
+    /// Announcements kept (the latest per org, app and channel).
+    pub max_announcements: usize,
+    /// Devices and relays subscribed at once.
+    pub max_subscribers: usize,
+    /// How often subscribers get a keepalive.
+    pub keepalive_secs: u64,
+}
+
+/// One org a relay carries announcements for.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpdateRoot {
+    /// The org's root pin (hex), as compiled into its apps.
+    pub pin: String,
+    /// Its root envelopes (CBOR files), the first root first, then each rotation.
+    pub chain: Vec<PathBuf>,
+}
+
+impl Default for Updates {
+    fn default() -> Self {
+        Updates { enabled: true, roots: vec![], upstream: vec![], max_announcements: 10_000, max_subscribers: 100_000, keepalive_secs: 60 }
+    }
+}
+
+impl Updates {
+    pub fn upstream_addrs(&self) -> Result<Vec<Multiaddr>> {
+        multiaddrs("updates.upstream", &self.upstream)
+    }
 }
 
 /// The relay wake path (`/weirdnet/wake/1`) for phones without APNs or FCM.
@@ -177,6 +218,7 @@ impl Default for Config {
             wss: Wss::default(),
             forwarding: Forwarding::default(),
             wake: Wake::default(),
+            updates: Updates::default(),
             log: Log::default(),
         }
     }
@@ -340,6 +382,22 @@ impl Config {
             }
             if !w.push.is_empty() && w.push_token_file.is_none() {
                 return Err(Error::Config("wake.push needs push_token_file".into()));
+            }
+        }
+        if self.updates.enabled {
+            let u = &self.updates;
+            if !(10..=600).contains(&u.keepalive_secs) || u.max_announcements == 0 || u.max_subscribers == 0 {
+                return Err(Error::Config("updates: keepalive_secs 10 to 600, max_announcements and max_subscribers at least 1".into()));
+            }
+            for a in u.upstream_addrs()? {
+                if !has_peer(&a) {
+                    return Err(Error::Config(format!("updates.upstream: `{a}` needs /p2p/<peer id>")));
+                }
+            }
+            for r in &u.roots {
+                if r.pin.len() != 64 || !r.pin.bytes().all(|b| b.is_ascii_hexdigit()) || r.chain.is_empty() {
+                    return Err(Error::Config("updates.roots: a 64-hex-digit pin and at least one root file".into()));
+                }
             }
         }
         if !matches!(self.log.format.as_str(), "pretty" | "json") {

@@ -25,6 +25,7 @@ weirdnet-net = "=0.4.0"
 weirdnet-storage = { version = "=0.1.0", default-features = false }
 weirdnet-push = "=0.1.0"
 futures = "0.3"
+weirdnet-update = { git = "https://github.com/WeirdBrains/weirdnet-update", rev = "91b60f8ad526b6c4d6b876fdcac229fae64ccd34", features = ["wire"] }
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 clap = { version = "4.6", features = ["derive", "env"] }

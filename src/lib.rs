@@ -19,6 +19,7 @@ pub mod http;
 pub mod info;
 pub mod relay;
 pub mod store;
+pub mod updates;
 pub mod wake;
 pub mod wire;
 

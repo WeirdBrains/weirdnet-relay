@@ -33,7 +33,7 @@ fn identities_are_stored_once() {
     s.init_node_identity(b"one", "p1").unwrap();
     s.init_node_identity(b"two", "p2").unwrap();
     assert_eq!(s.node_identity().unwrap().unwrap().1, "p1");
-    assert_eq!(s.schema_version().unwrap(), 3);
+    assert_eq!(s.schema_version().unwrap(), 4);
 }
 
 #[test]
