@@ -18,6 +18,8 @@ pub enum Error {
     Wake(String),
     #[error("updates: {0}")]
     Updates(String),
+    #[error("ddns: {0}")]
+    Ddns(String),
     #[error("info document: {0}")]
     Info(String),
 }

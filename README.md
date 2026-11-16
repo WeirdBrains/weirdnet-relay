@@ -133,6 +133,18 @@ verify the update itself, so a relay can withhold news but can't make an update 
 The protocol is in [weirdnet-update](https://github.com/WeirdBrains/weirdnet-update)
 (`announce::wire`).
 
+## Dynamic DNS
+
+Running your own relay needs a name tied to the machine. `[ddns]` (off by default) keeps it
+current through [Grindvakt](https://grindvakt.weirdbrains.com/)'s engine,
+[grindvakt-core](https://crates.io/crates/grindvakt-core): every `interval_secs` the relay
+looks up its public IPv4 and IPv6 addresses and keeps the `A`/`AAAA` records for its name,
+and the `_dnsaddr.<name>` records peers dial `/dnsaddr/<name>` by, at DigitalOcean or
+DNSimple. It never deletes records, and refuses to change anything when the zone is
+ambiguous. Behind CGNAT there is no public address to publish, and the relay says so.
+`weirdnet-relay ddns` prints what it would change; `--apply` writes it. The token comes from
+the systemd credential `dns-token` or `token_file`. See DEPLOY.md (step 8).
+
 ## The info document
 
     curl -s https://relay.example.com/.well-known/weirdnet-relay.json

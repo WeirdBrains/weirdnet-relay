@@ -37,6 +37,7 @@ pub struct Config {
     pub forwarding: Forwarding,
     pub wake: Wake,
     pub updates: Updates,
+    pub ddns: Ddns,
     pub log: Log,
 }
 
@@ -71,6 +72,69 @@ pub struct Forwarding {
     /// Names served on this machine itself, passed untouched to a local address: the info
     /// page's TLS proxy, say (`"relay.example.com" = "127.0.0.1:8443"`).
     pub local: std::collections::BTreeMap<String, String>,
+}
+
+/// Dynamic DNS through Grindvakt (grindvakt-core): keeps the relay's name, and its
+/// `_dnsaddr` record, pointed at its public address, for a relay at home or on a changing IP.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Ddns {
+    pub enabled: bool,
+    /// `digitalocean` or `dnsimple`.
+    pub provider: String,
+    /// The provider's API token, one line (default: the systemd credential `dns-token`).
+    pub token_file: Option<PathBuf>,
+    /// DNSimple's account id; unset: looked up from the token.
+    pub dnsimple_account: Option<u64>,
+    /// The zone at the provider (`example.com`).
+    pub zone: String,
+    /// The relay's name in the zone (`relay`, or `@` for the zone itself).
+    pub name: String,
+    /// Which records to keep: `A`, `AAAA`, or both when the host has each.
+    pub ipv4: bool,
+    pub ipv6: bool,
+    /// Also keep `_dnsaddr.<name>` (TXT `dnsaddr=/dns/<name>/…/p2p/<peer id>`) so peers dial
+    /// `/dnsaddr/<name>` without knowing the peer id.
+    pub dnsaddr: bool,
+    pub ttl: u32,
+    /// How often to look up the public address.
+    pub interval_secs: u64,
+    /// The provider's API base URL; empty: the real one (for tests and mocks).
+    pub api: String,
+}
+
+impl Default for Ddns {
+    fn default() -> Self {
+        Ddns {
+            enabled: false,
+            provider: String::new(),
+            token_file: None,
+            dnsimple_account: None,
+            zone: String::new(),
+            name: String::new(),
+            ipv4: true,
+            ipv6: true,
+            dnsaddr: true,
+            ttl: 300,
+            interval_secs: 300,
+            api: String::new(),
+        }
+    }
+}
+
+impl Ddns {
+    /// The relay's full DNS name.
+    pub fn fqdn(&self) -> String {
+        let zone = self.zone.trim().trim_end_matches('.').to_ascii_lowercase();
+        let name = self.name.trim().trim_end_matches('.').to_ascii_lowercase();
+        if name.is_empty() || name == "@" || name == zone {
+            zone
+        } else if let Some(n) = name.strip_suffix(&format!(".{zone}")) {
+            format!("{n}.{zone}")
+        } else {
+            format!("{name}.{zone}")
+        }
+    }
 }
 
 /// Update announcements (`/weirdnet/updates/1`).
@@ -219,6 +283,7 @@ impl Default for Config {
             forwarding: Forwarding::default(),
             wake: Wake::default(),
             updates: Updates::default(),
+            ddns: Ddns::default(),
             log: Log::default(),
         }
     }
@@ -398,6 +463,33 @@ impl Config {
                 if r.pin.len() != 64 || !r.pin.bytes().all(|b| b.is_ascii_hexdigit()) || r.chain.is_empty() {
                     return Err(Error::Config("updates.roots: a 64-hex-digit pin and at least one root file".into()));
                 }
+            }
+        }
+        if self.ddns.enabled {
+            let d = &self.ddns;
+            if !matches!(d.provider.as_str(), "digitalocean" | "dnsimple") {
+                return Err(Error::Config("ddns.provider: `digitalocean` or `dnsimple`".into()));
+            }
+            let fqdn = d.fqdn();
+            let label = |l: &str| {
+                !l.is_empty()
+                    && l.len() <= 63
+                    && l.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                    && !l.starts_with('-')
+                    && !l.ends_with('-')
+            };
+            let zone = d.zone.trim().trim_end_matches('.');
+            if !zone.contains('.') || !fqdn.split('.').all(label) || weirdnet_net::addr::dnsaddr_name(&fqdn).len() > 253 {
+                return Err(Error::Config("ddns: zone (example.com) and name (relay, or @) form the relay's DNS name".into()));
+            }
+            if !d.ipv4 && !d.ipv6 {
+                return Err(Error::Config("ddns: keep ipv4, ipv6 or both".into()));
+            }
+            if !(60..=86_400).contains(&d.ttl) || !(60..=86_400).contains(&d.interval_secs) {
+                return Err(Error::Config("ddns: ttl and interval_secs 60 to 86400".into()));
+            }
+            if !d.api.is_empty() && !d.api.starts_with("https://") && !d.api.starts_with("http://127.0.0.1") {
+                return Err(Error::Config("ddns.api: an https:// URL (plain http only on loopback)".into()));
             }
         }
         if !matches!(self.log.format.as_str(), "pretty" | "json") {

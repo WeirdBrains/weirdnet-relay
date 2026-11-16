@@ -213,6 +213,22 @@ Open TCP 80 and 443 in the firewall. To stop forwarding a site (an abuse report 
 (run them the way `check-config` runs in step 3, so they open the same database). A running
 relay picks the change up within seconds. `enabled = false` turns forwarding off entirely.
 
+## 8. Dynamic DNS (optional)
+
+For a relay on a home connection or an address that changes, `[ddns]` keeps its name
+current through Grindvakt. Put the DNS provider's API token (DigitalOcean: a token with
+domain write access; DNSimple: an account token) in an encrypted credential:
+
+    sudo systemd-creds encrypt --name=dns-token - /etc/weirdnet-relay/dns-token.cred   # paste the token, then Ctrl-D
+    sudo chmod 0600 /etc/weirdnet-relay/dns-token.cred
+    sudo systemctl edit weirdnet-relay   # add, under [Service]:
+    #   LoadCredentialEncrypted=dns-token:/etc/weirdnet-relay/dns-token.cred
+
+Set `[ddns]` in relay.toml (`enabled = true`, `provider`, `zone`, `name`), list the name
+under `[network] external`, then check and preview it the way `check-config` runs in step 3,
+with `-p LoadCredentialEncrypted=dns-token:/etc/weirdnet-relay/dns-token.cred` added and
+`ddns` instead of `check-config`. Restart the relay; it logs each record it writes.
+
 ## Updating
 
 Install the new release's package the same way (`apt-get install`, `dnf install`,

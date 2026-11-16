@@ -14,6 +14,7 @@
 
 pub mod config;
 pub mod dbkey;
+pub mod ddns;
 mod error;
 pub mod http;
 pub mod info;

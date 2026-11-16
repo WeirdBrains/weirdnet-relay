@@ -102,6 +102,24 @@ max_announcements = 10000
 max_subscribers = 100000
 keepalive_secs = 60
 
+[ddns]
+# Dynamic DNS through Grindvakt, for a relay you run on a home connection or a changing IP:
+# keeps A/AAAA for the relay's name current, and `_dnsaddr.<name>` so peers dial
+# /dnsaddr/<name>. Grindvakt never deletes records and changes nothing when the zone is
+# ambiguous (two A records at the name, say). `weirdnet-relay ddns` shows the plan.
+enabled = false
+# provider = "digitalocean"   # or "dnsimple"
+# token_file = "/run/credentials/weirdnet-relay.service/dns-token"   # the default: the `dns-token` credential
+# dnsimple_account = 12345
+# zone = "example.com"
+# name = "relay"              # or "@" for example.com itself
+ipv4 = true
+ipv6 = true
+dnsaddr = true
+ttl = 300
+interval_secs = 300
+# Also list the name under [network] external, e.g. "/dns4/relay.example.com/tcp/4747".
+
 [log]
 format = "pretty"   # or "json"
 level = "info"

@@ -23,3 +23,8 @@ What the relay holds and how:
   `[updates] roots`, the latest per org, app and channel, and refuses forged, mis-scoped or
   expired ones. It can't make an update acceptable: devices check every announcement against
   their own root and verify the update itself. A relay can only withhold news.
+- **Dynamic DNS:** the provider token is read once from its file (by default the systemd
+  credential `dns-token`), held as a secret and never logged or printed; a token file
+  readable by others draws a warning. The relay only creates and updates its own name's
+  `A`, `AAAA` and `dnsaddr=` TXT records, never deletes, and writes nothing when the zone is
+  ambiguous.

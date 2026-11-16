@@ -80,6 +80,12 @@ enum Cmd {
     UnrevokeSite { name: String },
     /// List revoked sites.
     RevokedSites,
+    /// Show the DNS records `[ddns]` keeps for this relay's public address and what would
+    /// change; `--apply` writes them.
+    Ddns {
+        #[arg(long)]
+        apply: bool,
+    },
 }
 
 fn parse_preset(s: &str) -> Result<Preset, String> {
@@ -151,6 +157,10 @@ fn main() -> anyhow::Result<()> {
         Cmd::GenKey => unreachable!(),
         Cmd::CheckConfig => {
             let store = open_store(&cfg)?;
+            if cfg.ddns.enabled {
+                weirdnet_relay::ddns::provider(&cfg.ddns)?;
+                println!("ddns: {} at {}, token read", cfg.ddns.fqdn(), cfg.ddns.provider);
+            }
             println!("config ok; database {} at schema {}", cfg.db_path().display(), store.schema_version()?);
             Ok(())
         }
@@ -189,8 +199,30 @@ fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
+        Cmd::Ddns { apply } => ddns(cfg, apply),
         Cmd::Run => run(cfg),
     }
+}
+
+fn ddns(cfg: Config, apply: bool) -> anyhow::Result<()> {
+    use weirdnet_relay::ddns;
+    if !cfg.ddns.enabled {
+        anyhow::bail!("[ddns] is off; set enabled = true with a provider, zone and name");
+    }
+    let store = open_store(&cfg)?;
+    let peer = weirdnet_net::identity::load_or_create(&store)?.public().to_peer_id();
+    let dns = ddns::provider(&cfg.ddns)?;
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
+    let plan = rt.block_on(async {
+        let found = grindvakt_core::ip::discover(ddns::family(&cfg.ddns), &grindvakt_core::ip::Sources::default()).await?;
+        let want = ddns::wanted(&cfg, &peer, &found)?;
+        anyhow::Ok(ddns::sync(&dns, &cfg.ddns.zone, &want, !apply).await?)
+    })?;
+    print!("{plan}");
+    if !apply && !plan.is_noop() {
+        println!("(dry run; pass --apply to write)");
+    }
+    Ok(())
 }
 
 fn run(cfg: Config) -> anyhow::Result<()> {

@@ -26,6 +26,7 @@ weirdnet-storage = { version = "=0.1.0", default-features = false }
 weirdnet-push = "=0.1.0"
 futures = "0.3"
 weirdnet-update = { version = "=0.2.0", features = ["wire"] }
+grindvakt-core = "=1.2.0"
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 clap = { version = "4.6", features = ["derive", "env"] }

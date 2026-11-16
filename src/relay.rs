@@ -56,6 +56,7 @@ pub struct Relay {
     ingress: Option<Ingress>,
     wake: Option<crate::wake::WakeService>,
     updates: Option<crate::updates::UpdatesService>,
+    ddns: Option<crate::ddns::DdnsService>,
 }
 
 impl Relay {
@@ -90,7 +91,8 @@ impl Relay {
         } else {
             None
         };
-        let relay = Relay { cfg, node, store, info, ingress, wake, updates };
+        let ddns = if forward && cfg.ddns.enabled { Some(crate::ddns::DdnsService::start(&cfg, peer)?) } else { None };
+        let relay = Relay { cfg, node, store, info, ingress, wake, updates, ddns };
         relay.refresh();
         let i = relay.info.get();
         tracing::info!(peer_id = %i.peer_id, addrs = ?i.addrs, "relay started");
@@ -135,6 +137,11 @@ impl Relay {
         self.updates.as_ref()
     }
 
+    /// The dynamic DNS updater, when `[ddns]` is on.
+    pub fn ddns(&self) -> Option<&crate::ddns::DdnsService> {
+        self.ddns.as_ref()
+    }
+
     /// The forwarding ingress, when on.
     pub fn ingress(&self) -> Option<&Ingress> {
         self.ingress.as_ref()
@@ -163,6 +170,7 @@ impl Relay {
     pub fn stop(mut self) {
         drop(self.wake.take());
         drop(self.updates.take());
+        drop(self.ddns.take());
         self.node.halt();
         if let Ok(node) = Arc::try_unwrap(self.node) {
             node.stop();

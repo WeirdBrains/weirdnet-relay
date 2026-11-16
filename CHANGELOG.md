@@ -6,6 +6,12 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Dynamic DNS through Grindvakt: the relay keeps its name and `_dnsaddr` records pointed at its public address, on DigitalOcean or DNSimple. Off by default.
+- The `ddns` command shows the DNS changes, and `--apply` writes them.
+- check-config reads the DNS token when dynamic DNS is on.
+
 ## [0.4.0] - 2026-11-16
 
 ### Added
