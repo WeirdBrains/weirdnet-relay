@@ -23,7 +23,7 @@ path = "src/main.rs"
 [dependencies]
 weirdnet-net = "=0.3.0"
 weirdnet-storage = { version = "=0.1.0", default-features = false }
-weirdnet-push = { git = "https://github.com/WeirdBrains/weirdnet-push", branch = "relay-wake" }
+weirdnet-push = { git = "https://github.com/WeirdBrains/weirdnet-push", rev = "d8fdeea7726bddc8ed04b02d6e2abfcf144edea2" }
 futures = "0.3"
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
@@ -40,7 +40,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"]
 zeroize = "1"
 
 [dev-dependencies]
-weirdnet-push = { git = "https://github.com/WeirdBrains/weirdnet-push", branch = "relay-wake", features = ["server"] }
+weirdnet-push = { git = "https://github.com/WeirdBrains/weirdnet-push", rev = "d8fdeea7726bddc8ed04b02d6e2abfcf144edea2", features = ["server"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 rcgen = "0.13"
 tempfile = "3"

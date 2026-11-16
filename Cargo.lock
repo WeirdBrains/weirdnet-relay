@@ -3739,7 +3739,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4286,7 +4286,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
@@ -4941,7 +4941,7 @@ dependencies = [
 [[package]]
 name = "weirdnet-push"
 version = "0.1.0"
-source = "git+https://github.com/WeirdBrains/weirdnet-push?branch=relay-wake#d8fdeea7726bddc8ed04b02d6e2abfcf144edea2"
+source = "git+https://github.com/WeirdBrains/weirdnet-push?rev=d8fdeea7726bddc8ed04b02d6e2abfcf144edea2#d8fdeea7726bddc8ed04b02d6e2abfcf144edea2"
 dependencies = [
  "axum",
  "base64 0.22.1",
