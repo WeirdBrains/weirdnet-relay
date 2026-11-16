@@ -21,9 +21,7 @@ name = "weirdnet-relay"
 path = "src/main.rs"
 
 [dependencies]
-# RelayLimits (configurable relay limits) lands on weirdnet-net main first; switch to the
-# crates.io release once it is published.
-weirdnet-net = { git = "https://github.com/WeirdBrains/weirdnet-net", branch = "main" }
+weirdnet-net = "=0.2.0"
 weirdnet-storage = { version = "=0.1.0", default-features = false }
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }

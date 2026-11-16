@@ -11,7 +11,11 @@ name = "Weirdnet relay"
 port = 4747
 # How others reach this relay, without /p2p/ (set this on a public server):
 # external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
-bootstrap = []
+# Join Weirdnet through the WeirdBrains public relay (https://relay.net.weirdbrains.com/):
+bootstrap = [
+  "/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB",
+  "/dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB",
+]
 
 [limits]
 preset = "unlimited"

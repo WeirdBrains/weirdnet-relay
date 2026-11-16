@@ -4,8 +4,8 @@ The WeirdBrains public relay is **relay.net.weirdbrains.com**.
 These steps install weirdnet-relay there with systemd. They work the same on any Linux
 server with systemd 250 or newer (for `systemd-creds`).
 
-Status: **coming online.** The DNS name is live; the relay is not deployed yet. Its peer id
-is filled in below once the relay has made its key (`<RELAY_PEER_ID>` until then).
+Status: **live** since 2026-11-16 (https://relay.net.weirdbrains.com/). Peer id
+`12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB`.
 
 ## 1. Install the .deb
 
@@ -47,7 +47,7 @@ Edit `/etc/weirdnet-relay/relay.toml`:
 ```toml
 name = "WeirdBrains public relay"
 operator = "WeirdBrains"
-contact = "<ABUSE_CONTACT>"     # an address that reads abuse reports
+contact = "michael+relay@weirdbrains.com"     # an address that reads abuse reports
 description = "The WeirdBrains public relay and bootstrap node for Weirdnet."
 
 [network]
@@ -114,11 +114,12 @@ reverse proxy on 80 and 443 in front of `127.0.0.1:4780`, for example Caddy:
 
 The `addrs` there are what apps use:
 
-    /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/<RELAY_PEER_ID>
-    /dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/<RELAY_PEER_ID>
+    /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
+    /dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
 
-Replace `<RELAY_PEER_ID>` in this repository's README and example config, and on
-https://net.weirdbrains.com/relay, with the real peer id.
+These are in this repository's README and example config and on
+https://net.weirdbrains.com/relay. A rebuilt server with a new key changes the peer id; update
+them all then.
 
 ## Updating
 

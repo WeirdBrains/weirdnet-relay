@@ -32,16 +32,15 @@ What it does:
 
 ## The WeirdBrains public relay
 
-WeirdBrains runs public relays. The first is **relay.net.weirdbrains.com**, *coming online*:
-the DNS name is live, the relay is not answering yet. Once it is, use it as a bootstrap node
-and relay:
+WeirdBrains runs public relays. The first is **relay.net.weirdbrains.com**, *live*
+([info page](https://relay.net.weirdbrains.com/)). Use it as a bootstrap node and relay:
 
-    /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/<RELAY_PEER_ID>
-    /dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/<RELAY_PEER_ID>
+    /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
+    /dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
 
-`<RELAY_PEER_ID>` is a placeholder until the relay has made its key; its info page
-(`https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json`) will give the real
-addresses. [DEPLOY.md](DEPLOY.md) is how it is installed.
+Its info document (`https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json`)
+lists the same addresses. Abuse reports: michael+relay@weirdbrains.com.
+[DEPLOY.md](DEPLOY.md) is how it is installed.
 
 ## Install
 

@@ -4318,8 +4318,9 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-net"
-version = "0.1.0"
-source = "git+https://github.com/WeirdBrains/weirdnet-net?branch=main#d7184ee575cd5d0f85dc7b75f8e81377aa3eb135"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b03ee54d4eac83316fb126b19e4a778a3faccabe794845c753ddb1efcfaa862"
 dependencies = [
  "base64",
  "futures",

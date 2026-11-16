@@ -15,3 +15,4 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Command line: run, id, info, check-config and gen-key.
 - Hardened systemd unit and a Debian package.
 - Deployment guide for relay.net.weirdbrains.com.
+- Example and packaged configs join Weirdnet through the WeirdBrains public relay.
