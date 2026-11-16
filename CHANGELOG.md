@@ -6,6 +6,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-16
+
 ### Added
 
 - The wake path for phones without APNs or FCM, with an optional push service to follow.
@@ -48,7 +50,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Deployment guide for relay.net.weirdbrains.com.
 - Example and packaged configs join Weirdnet through the WeirdBrains public relay.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/WeirdBrains/weirdnet-relay/releases/tag/v0.1.0
