@@ -4286,7 +4286,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
@@ -4915,12 +4915,13 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-net"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01a8efb573106378a3f61994c12d65e45298c508d83f55df9c693e9a054aa97f"
+checksum = "0b537d30de206ca142bea783830262614dfad13924d49450b94a1b39fe04ed40"
 dependencies = [
  "base64 0.22.1",
  "blake3",
+ "chacha20poly1305",
  "futures",
  "hex",
  "hickory-resolver",
@@ -4941,7 +4942,8 @@ dependencies = [
 [[package]]
 name = "weirdnet-push"
 version = "0.1.0"
-source = "git+https://github.com/WeirdBrains/weirdnet-push?rev=d8fdeea7726bddc8ed04b02d6e2abfcf144edea2#d8fdeea7726bddc8ed04b02d6e2abfcf144edea2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da4360c727c64374c492eaf4f23380139ce6d25ee24b790909330672a7399bdd"
 dependencies = [
  "axum",
  "base64 0.22.1",
