@@ -9,7 +9,7 @@
 # A release pins weirdnet-net from crates.io (AGENTS.md: apps track Weirdnet main through git
 # during development). Until weirdnet-net 0.2.0 is on crates.io, Cargo.toml keeps the git
 # dependency and no relay release can be cut; then switch it and add a [[requires]] entry.
-helpers = "0.3.0"
+helpers = "0.3.1"
 project = "weirdnet-relay"
 timezone = "America/New_York"
 next = [

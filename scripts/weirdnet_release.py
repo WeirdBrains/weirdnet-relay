@@ -53,7 +53,7 @@ try:
 except ImportError:  # Python < 3.11 (e.g. Ubuntu 22.04 runners): mini_toml() below
     tomllib = None
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 CONFIG = "release.toml"
 ORDER = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
@@ -937,10 +937,11 @@ def verify_required_lock(root, r, ver, cksum):
         raise ReleaseError(f"{rel}: {name} {ver} checksum {p.get('checksum')} does not match crates.io {cksum}")
 
 
-def crate_plan(root, cfg, tag, prev_tag):
+def crate_plan(root, cfg, tag, prev_tag, edits=None):
     """[(path, name, version, action, reason)] for [crates] publish, in the configured order.
     publish = false crates are skipped; a version already on crates.io is skipped (with a warning
-    when the crate changed since the previous tag, because it then needs a version bump)."""
+    when the crate changed since the previous tag, because it then needs a version bump).
+    `edits` (dry run): planned file contents, read instead of the tree's."""
     ws = (Path(root) / "Cargo.toml").read_text(encoding="utf-8") if (Path(root) / "Cargo.toml").is_file() else ""
     ws_ver = _table_version(ws, "workspace.package")
     res = []
@@ -949,6 +950,9 @@ def crate_plan(root, cfg, tag, prev_tag):
         if not mf.is_file():
             raise ReleaseError(f"[crates] {rel}: no Cargo.toml")
         t = mf.read_text(encoding="utf-8")
+        if edits:
+            t = edits.get(str(Path(rel) / "Cargo.toml"), (t, t))[1]
+            ws_ver = _table_version(edits.get("Cargo.toml", (ws, ws))[1], "workspace.package") if ws else ws_ver
         name, ver = package_name(t), _table_version(t, "package")
         ver = ws_ver if ver == "workspace" else ver
         if not publish_flag(t):
@@ -960,7 +964,7 @@ def crate_plan(root, cfg, tag, prev_tag):
             changed = True
         have = crates_index(name)
         if ver in have:
-            res.append((rel, name, ver, "skip", "already on crates.io" + (" (changed since " + prev_tag + ": bump its version)" if changed else "")))
+            res.append((rel, name, ver, "skip", "already on crates.io" + (f" (changed since {prev_tag}: bump its version)" if changed and prev_tag else "")))
         else:
             # A version crates.io doesn't have is always affected (its own or the workspace bump).
             res.append((rel, name, ver, "publish", f"{ver} not on crates.io yet"))
@@ -1084,7 +1088,7 @@ def cut(a, root):
         out("[dry-run] commit message:\n" + commit_msg)
         if not a.skip_crates and not a.no_push and cfg.get("crates"):
             try:
-                publish_crates_preview(root, cfg, prev[-1][1] if prev else None)
+                publish_crates_preview(root, cfg, prev[-1][1] if prev else None, plan.edits)
             except ReleaseError as e:
                 out(f"[dry-run] crates: {e}")
         for n in cfg.get("next", []):
@@ -1185,9 +1189,10 @@ def lock_update_cmd(r, ver):
     return cmd
 
 
-def publish_crates_preview(root, cfg, prev_tag):
-    """Dry-run view of crates.io: changes are measured from the previous tag to HEAD."""
-    for rel, name, ver, act, why in crate_plan(root, cfg, "HEAD", prev_tag):
+def publish_crates_preview(root, cfg, prev_tag, edits=None):
+    """Dry-run view of crates.io: changes are measured from the previous tag to HEAD, at the
+    versions the bump would write."""
+    for rel, name, ver, act, why in crate_plan(root, cfg, "HEAD", prev_tag, edits):
         out(f"[dry-run] crate {name} {ver}: {act} ({why})")
 
 
