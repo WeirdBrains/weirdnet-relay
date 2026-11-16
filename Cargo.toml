@@ -1,6 +1,6 @@
 [package]
 name = "weirdnet-relay"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.99"
 description = "Weirdnet relay and bootstrap node: libp2p circuit relay v2 with data-carrying circuits, Kademlia server, AutoNAT and hole-punch coordination on weirdnet-net, a node key in a SQLCipher database, and an info page (HTML and /.well-known/weirdnet-relay.json)."
