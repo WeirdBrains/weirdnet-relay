@@ -6,6 +6,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16
+
 ### Added
 
 - Relay and bootstrap node for Weirdnet, with no relay caps by default.
