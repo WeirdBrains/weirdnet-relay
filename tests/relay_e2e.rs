@@ -93,3 +93,33 @@ fn apps_reach_each_other_through_the_relay_and_it_describes_itself() {
     }
     relay.stop();
 }
+
+/// Muninn's protocol ids, as in Muninn's `profile.rs` (`/muninn/...`; Muninn keeps them).
+const MUNINN_IDS: weirdnet_net::Profile = weirdnet_net::Profile {
+    name: "muninn",
+    protocol: "/muninn/net/1",
+    kad: "/muninn/kad/1",
+    relay_key: "/muninn/relay/1",
+    identify: "/muninn/id/1",
+    default_port: 4741,
+    ..WEIRDNET
+};
+
+#[test]
+fn apps_on_their_own_protocol_ids_use_the_relay_too() {
+    let port = free_port();
+    let base = format!("/ip4/127.0.0.1/tcp/{port}");
+    let cfg = Config { network: Network { listen: vec![base.clone()], external: vec![base.clone()], ..Default::default() }, ..Default::default() };
+    let relay = Relay::start(cfg, Store::open_in_memory().unwrap()).unwrap();
+    let raddr: Multiaddr = relay.refresh().addrs[0].parse().unwrap();
+
+    let b = Node::start(&MUNINN_IDS, Keypair::generate_ed25519(), NodeConfig { relays: vec![raddr.clone()], ..client() }, Arc::new(Blobs)).unwrap();
+    wait("reservation", || b.status().reservations.contains(&relay.peer_id().to_string()));
+    let a = Node::start(&MUNINN_IDS, Keypair::generate_ed25519(), client(), Arc::new(Blobs)).unwrap();
+    let circuit: Multiaddr = format!("{raddr}/p2p-circuit/p2p/{}", b.peer_id()).parse().unwrap();
+    let Blob(v) = a.request(b.peer_id(), std::slice::from_ref(&circuit), Get(256 * 1024)).unwrap();
+    assert_eq!(v.len(), 256 * 1024);
+    a.stop();
+    b.stop();
+    relay.stop();
+}

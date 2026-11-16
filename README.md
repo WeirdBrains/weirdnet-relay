@@ -3,11 +3,17 @@
 A relay and bootstrap node for the [Weirdnet](https://net.weirdbrains.com) network, built on
 [weirdnet-net](https://github.com/WeirdBrains/weirdnet-net).
 
-Apps on Weirdnet (Morph, Muninn as `weirdnet-muninn`, …) share the base protocols
-`/weirdnet/kad/1`, `/weirdnet/id/1` and `/weirdnet/relay/1` on port 4747. A device behind a
-NAT reserves a slot on a relay; others reach it at `<relay>/p2p-circuit/p2p/<device>` and
-then try to switch to a direct path (DCUtR). The relay is also a Kademlia server, so a new
-node can bootstrap from it, and it provides the `/weirdnet/relay/1` key so nodes find relays.
+Apps on the Weirdnet profile (Morph, …) share the base protocols `/weirdnet/kad/1`,
+`/weirdnet/id/1` and `/weirdnet/relay/1` on port 4747. A device behind a NAT reserves a slot
+on a relay; others reach it at `<relay>/p2p-circuit/p2p/<device>` and then try to switch to a
+direct path (DCUtR). The relay is also a Kademlia server, so a new node can bootstrap from it,
+and it provides the `/weirdnet/relay/1` key so nodes find relays.
+
+Apps with their own protocol ids can use it too. Muninn is on Weirdnet as `weirdnet-muninn`
+and keeps its `/muninn/...` protocols: circuit relay v2, DCUtR and AutoNAT are libp2p's
+standard protocols, so a Muninn node configured with this relay's full address
+(`…/p2p/<relay peer id>`) can reserve a slot and be reached through it. The DHT and relay
+discovery are per protocol id, so they serve `/weirdnet/...` nodes only.
 
 What it does:
 
