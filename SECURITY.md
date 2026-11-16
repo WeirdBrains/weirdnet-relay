@@ -16,3 +16,10 @@ What the relay holds and how:
   limiters, so one relay can be used for as much traffic as its uplink carries. Circuits are
   end-to-end encrypted (Noise/TLS between the two ends); the relay sees peer ids and byte
   counts, not content. Use `preset = "libp2p"` or per-field limits to cap a public relay.
+- **Wakes:** wake payloads are sealed, fixed-size and passed on unread; the relay keeps them
+  only in memory, briefly, and caps them per handle. A push token file is read once and never
+  logged.
+- **Update announcements:** the relay stores only announcements signed for the orgs in
+  `[updates] roots`, the latest per org, app and channel, and refuses forged, mis-scoped or
+  expired ones. It can't make an update acceptable: devices check every announcement against
+  their own root and verify the update itself. A relay can only withhold news.

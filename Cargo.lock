@@ -5063,6 +5063,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hex",
  "rcgen",
+ "semver",
  "serde",
  "serde_json",
  "tempfile",
@@ -5093,8 +5094,9 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-update"
-version = "0.1.0"
-source = "git+https://github.com/WeirdBrains/weirdnet-update?rev=91b60f8ad526b6c4d6b876fdcac229fae64ccd34#91b60f8ad526b6c4d6b876fdcac229fae64ccd34"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a402ff4d348f3b2d5598b363180ad4d3d3b35136d895925e10400b56243bcc61"
 dependencies = [
  "blake3",
  "ciborium",

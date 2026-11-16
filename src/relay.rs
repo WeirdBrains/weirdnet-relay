@@ -80,7 +80,7 @@ impl Relay {
         let node = Arc::new(Node::start(&RELAY_PROFILE, key, node_cfg, handler)?);
         let ingress = if forward && cfg.forwarding.enabled {
             let binding: Arc<dyn Binding> = Arc::new(DnsBinding::system()?);
-            Some(start_forwarding(&cfg, &*node, &store, binding)?)
+            Some(start_forwarding(&cfg, &node, &store, binding)?)
         } else {
             None
         };

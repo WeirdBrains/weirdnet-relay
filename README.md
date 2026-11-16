@@ -121,6 +121,18 @@ passes payloads on unread, holds them briefly for a phone that just dropped off,
 wakes per handle. The protocol is in
 [weirdnet-push](https://github.com/WeirdBrains/weirdnet-push) (`relaywake`).
 
+## Update announcements
+
+`[updates]` makes the relay a carrier for signed update announcements on
+`/weirdnet/updates/1`. Publishers publish announcements and root rotations, devices subscribe
+to the apps and channels they run, and relays listed in `upstream` are followed so news
+published there reaches devices here. Only orgs in `roots` (a pin and its root files) are
+carried, and only the latest announcement per org, app and channel, kept in the database
+across restarts. Devices check each announcement against their own root and then fetch and
+verify the update itself, so a relay can withhold news but can't make an update acceptable.
+The protocol is in [weirdnet-update](https://github.com/WeirdBrains/weirdnet-update)
+(`announce::wire`).
+
 ## The info document
 
     curl -s https://relay.example.com/.well-known/weirdnet-relay.json

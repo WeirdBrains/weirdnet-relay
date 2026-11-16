@@ -6,6 +6,11 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Update announcements: the relay carries signed announcements for the orgs it trusts, keeps the latest, and follows other relays.
+- The info document says whether the relay carries update announcements.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

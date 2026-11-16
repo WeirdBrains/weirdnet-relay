@@ -87,6 +87,21 @@ hold_secs = 120        # wakes wait this long for a phone that just dropped off
 max_per_minute = 30    # per handle; more are dropped (battery protection)
 keepalive_secs = 60
 
+[updates]
+# Update announcements on /weirdnet/updates/1: publishers publish signed announcements here,
+# devices subscribe to the apps they run, and other relays follow. Only orgs listed in
+# `roots` are carried, the latest per org, app and channel. Devices still check every
+# announcement and update themselves; a relay can only withhold news, never forge it.
+enabled = true
+# roots = [
+#   { pin = "<64 hex digits, as compiled into the org's apps>", chain = ["/etc/weirdnet-relay/roots/weirdbrains-1.root"] },
+# ]
+# Relays to follow, so announcements published there reach devices here:
+# upstream = ["/dns4/relay.net.weirdbrains.com/tcp/4001/p2p/12D3Koo..."]
+max_announcements = 10000
+max_subscribers = 100000
+keepalive_secs = 60
+
 [log]
 format = "pretty"   # or "json"
 level = "info"
