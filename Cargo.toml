@@ -21,7 +21,7 @@ name = "weirdnet-relay"
 path = "src/main.rs"
 
 [dependencies]
-weirdnet-net = "=0.2.0"
+weirdnet-net = "=0.3.0"
 weirdnet-storage = { version = "=0.1.0", default-features = false }
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
@@ -68,7 +68,3 @@ assets = [
   ["DEPLOY.md", "usr/share/doc/weirdnet-relay/", "644"],
   ["CHANGELOG.md", "usr/share/doc/weirdnet-relay/", "644"],
 ]
-
-# Until weirdnet-net 0.3.0 is on crates.io: its main branch (WSS, ingress).
-[patch.crates-io]
-weirdnet-net = { git = "https://github.com/WeirdBrains/weirdnet-net", rev = "551bc73ecb57b238686d807e3b6cd7a13dd74e00" }
