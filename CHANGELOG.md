@@ -6,6 +6,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-16
+
 ### Added
 
 - RPM and Arch Linux packages for x86_64 and aarch64, and the Arch recipe on TAUR.
@@ -28,5 +30,6 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Deployment guide for relay.net.weirdbrains.com.
 - Example and packaged configs join Weirdnet through the WeirdBrains public relay.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/WeirdBrains/weirdnet-relay/releases/tag/v0.1.0
