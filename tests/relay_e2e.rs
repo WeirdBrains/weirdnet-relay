@@ -123,3 +123,42 @@ fn apps_on_their_own_protocol_ids_use_the_relay_too() {
     b.stop();
     relay.stop();
 }
+
+#[test]
+fn the_relay_keeps_signed_peer_records_for_lookups() {
+    use weirdnet_net::names::{Entry, Lookup};
+    let port = free_port();
+    let base = format!("/ip4/127.0.0.1/tcp/{port}");
+    let dir = tempfile::tempdir().unwrap();
+    let db = dir.path().join("relay.db");
+    let key = [5u8; 32];
+    let cfg = Config { network: Network { listen: vec![base.clone()], external: vec![base.clone()], ..Default::default() }, ..Default::default() };
+    let relay = Relay::start(cfg.clone(), Store::open(&db, &key).unwrap()).unwrap();
+    let raddr: Multiaddr = relay.refresh().addrs[0].parse().unwrap();
+
+    let user = Keypair::generate_ed25519();
+    let uid = weirdnet_net::user::user_id(&user.public());
+    let bkey = Keypair::generate_ed25519();
+    let b = Node::start(&WEIRDNET, bkey.clone(), NodeConfig { relays: vec![raddr.clone()], ..client() }, Arc::new(Blobs)).unwrap();
+    wait("reservation", || b.status().reservations.contains(&relay.peer_id().to_string()));
+    let now = weirdnet_net::now_ms();
+    let cert = WEIRDNET.certify(&user, &uid, &b.peer_id().to_string(), "phone", now).unwrap();
+    let circuit: Multiaddr = format!("{raddr}/p2p-circuit/p2p/{}", b.peer_id()).parse().unwrap();
+    let rec = WEIRDNET.peer_record(&bkey, &user.public(), &cert, &[circuit], Some(&raddr), now as u64, now, 3_600_000).unwrap();
+    assert_eq!(b.register_everywhere(&Entry::Record(rec.clone())), 1);
+    assert_eq!(relay.store().names_count().unwrap(), 1);
+
+    let a =
+        Node::start(&WEIRDNET, Keypair::generate_ed25519(), NodeConfig { names_servers: vec![raddr.clone()], ..client() }, Arc::new(Blobs)).unwrap();
+    assert_eq!(a.lookup(&uid), Lookup::Found(rec.clone()));
+    let (peer, Blob(v)) = a.request_user(&uid, Get(4096)).unwrap();
+    assert_eq!((peer, v.len()), (b.peer_id(), 4096));
+
+    // the entry survives a restart of the relay
+    a.stop();
+    b.stop();
+    relay.stop();
+    let relay = Relay::start(cfg, Store::open(&db, &key).unwrap()).unwrap();
+    assert_eq!(weirdnet_net::names::NameStore::get(relay.store(), &uid), Some(Entry::Record(rec)));
+    relay.stop();
+}

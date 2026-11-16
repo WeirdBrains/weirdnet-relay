@@ -5,12 +5,14 @@ use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 use weirdnet_net::Sighting;
 use weirdnet_net::identity::{IdentityStore, Stored};
+use weirdnet_net::names::{Entry, NameStore};
 use weirdnet_storage::RawKey;
 use weirdnet_storage::rusqlite::{Connection, OptionalExtension, params};
 use zeroize::Zeroizing;
 
 /// Schema migrations, in order. Never edit one that has shipped; add a new one.
-pub const MIGRATIONS: &[&str] = &[r#"
+pub const MIGRATIONS: &[&str] = &[
+    r#"
 CREATE TABLE node_identity (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   keypair BLOB NOT NULL,
@@ -28,7 +30,17 @@ CREATE TABLE peers (
 );
 CREATE INDEX peers_last_seen ON peers(last_seen);
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-"#];
+"#,
+    r#"
+CREATE TABLE names (
+  user_id TEXT PRIMARY KEY,
+  entry BLOB NOT NULL,
+  seq INTEGER NOT NULL,
+  expires INTEGER NOT NULL
+);
+CREATE INDEX names_expires ON names(expires);
+"#,
+];
 
 /// A peer the relay has seen.
 #[derive(Debug, Clone, PartialEq)]
@@ -147,5 +159,37 @@ impl IdentityStore for Store {
             params![keypair, peer, weirdnet_net::now_ms()],
         )?;
         Ok(())
+    }
+}
+
+/// The names (rendezvous) server's entries: signed peer records and withdrawals, checked by
+/// weirdnet-net before they get here, kept across restarts until they expire.
+impl NameStore for Store {
+    fn get(&self, user: &str) -> Option<Entry> {
+        let bytes: Option<Vec<u8>> =
+            self.conn().query_row("SELECT entry FROM names WHERE user_id = ?1", [user], |r| r.get(0)).optional().ok().flatten();
+        bytes.and_then(|b| Entry::decode(&b).ok())
+    }
+
+    fn put(&self, e: &Entry) {
+        let r = self.conn().execute(
+            "INSERT INTO names (user_id, entry, seq, expires) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(user_id) DO UPDATE SET entry = ?2, seq = ?3, expires = ?4",
+            params![e.user_id(), e.encode(), e.seq() as i64, e.expires()],
+        );
+        if let Err(err) = r {
+            tracing::warn!("cannot store a names entry: {err}");
+        }
+    }
+
+    fn prune(&self, now: i64) {
+        let _ = self.conn().execute("DELETE FROM names WHERE expires <= ?1", [now]);
+    }
+}
+
+impl Store {
+    /// How many names entries are held.
+    pub fn names_count(&self) -> Result<u64> {
+        Ok(self.conn().query_row("SELECT COUNT(*) FROM names", [], |r| r.get::<_, i64>(0))? as u64)
     }
 }

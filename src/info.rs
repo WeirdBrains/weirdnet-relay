@@ -15,6 +15,7 @@ pub const PROTOCOLS: &[&str] = &[
     crate::wire::INFO_PROTOCOL,
     "/weirdnet/kad/1",
     "/weirdnet/id/1",
+    "/weirdnet/names/1",
     "/libp2p/circuit/relay/0.2.0/hop",
     "/libp2p/circuit/relay/0.2.0/stop",
     "/libp2p/dcutr",
@@ -151,7 +152,7 @@ impl RelayInfo {
             transports: transports(&addrs),
             addrs,
             protocols: PROTOCOLS.iter().map(|p| p.to_string()).collect(),
-            roles: ["relay", "bootstrap", "kad-server", "autonat"].iter().map(|r| r.to_string()).collect(),
+            roles: ["relay", "bootstrap", "kad-server", "autonat", "names"].iter().map(|r| r.to_string()).collect(),
             network: NetworkIds {
                 profile: WEIRDNET.name.into(),
                 kad: WEIRDNET.kad.into(),

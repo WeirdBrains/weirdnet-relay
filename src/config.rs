@@ -314,6 +314,7 @@ impl Config {
             external: self.external_addrs()?,
             version: crate::VERSION.into(),
             relay_limits: self.relay_limits(),
+            ..Default::default()
         })
     }
 }

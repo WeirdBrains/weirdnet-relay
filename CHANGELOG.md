@@ -11,4 +11,5 @@
 - An info page: HTML at `/`, JSON at `/.well-known/weirdnet-relay.json`, `/healthz`, and the
   same document over `/weirdnet/relay/info/1`.
 - CLI: `run`, `id`, `info`, `check-config`, `gen-key`; TOML config, flags and `WEIRDNET_RELAY_*`.
-- A hardened systemd unit.
+- A hardened systemd unit, and DEPLOY.md for relay.net.weirdbrains.com.
+- A names (rendezvous) server for signed peer records, stored in the relay's database.

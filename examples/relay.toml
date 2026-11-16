@@ -21,8 +21,12 @@ port = 4747
 # listen = ["/ip4/0.0.0.0/tcp/4747", "/ip4/0.0.0.0/udp/4747/quic-v1"]
 # How others reach this relay, without /p2p/ (the relay adds its peer id).
 external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
-# Other relays or bootstrap nodes, with /p2p/<peer id>.
-bootstrap = []
+# Other relays or bootstrap nodes, with /p2p/<peer id>. The WeirdBrains public relay is
+# coming online; replace <RELAY_PEER_ID> with its peer id (from its info page) and uncomment:
+bootstrap = [
+  # "/dns4/relay.net.weirdbrains.com/tcp/4747/p2p/<RELAY_PEER_ID>",
+  # "/dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/<RELAY_PEER_ID>",
+]
 mdns = false
 
 [limits]

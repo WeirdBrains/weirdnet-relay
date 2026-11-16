@@ -11,7 +11,7 @@ homepage = "https://net.weirdbrains.com/relay"
 readme = "README.md"
 keywords = ["p2p", "libp2p", "relay", "weirdnet"]
 categories = ["network-programming", "command-line-utilities"]
-include = ["src/**", "README.md", "LICENSE", "examples/relay.toml", "packaging/**", "assets/**"]
+include = ["src/**", "README.md", "DEPLOY.md", "LICENSE", "examples/relay.toml", "packaging/**", "assets/**"]
 
 [lib]
 name = "weirdnet_relay"

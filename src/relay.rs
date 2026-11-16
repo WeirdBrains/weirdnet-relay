@@ -62,7 +62,9 @@ impl Relay {
         let store = Arc::new(store);
         let key = weirdnet_net::identity::load_or_create(&*store)?;
         let peer = key.public().to_peer_id();
-        let node_cfg = cfg.node_config()?;
+        let mut node_cfg = cfg.node_config()?;
+        // the names (rendezvous) server keeps its entries in the relay's database
+        node_cfg.names_server = Some(weirdnet_net::names::Names(store.clone()));
         let info = InfoHandle::new(RelayInfo::build(&cfg, &peer, &Default::default(), &[], now_ms()));
         let handler = Arc::new(RelayHandler { store: store.clone(), info: info.clone() });
         let node = Node::start(&RELAY_PROFILE, key, node_cfg, handler)?;

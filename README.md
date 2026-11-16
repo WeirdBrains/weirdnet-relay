@@ -23,9 +23,25 @@ What it does:
 - **Kademlia bootstrap** (server mode), identify, ping, AutoNAT, DCUtR, mDNS (off by default).
 - **One encrypted database**: the node key and a table of peers seen, in SQLCipher, keyed
   from a systemd credential.
+- **A names server** (`/weirdnet/names/1`): devices register signed peer records with their
+  home relay and others look them up by user id; records and withdrawals are checked by
+  weirdnet-net and kept in the relay's database until they expire.
 - **An info page** describing the relay: HTML at `/`, JSON at
   `/.well-known/weirdnet-relay.json`, health at `/healthz`, and the same document over the
   `/weirdnet/relay/info/1` protocol.
+
+## The WeirdBrains public relay
+
+WeirdBrains runs public relays. The first is **relay.net.weirdbrains.com**, *coming online*:
+the DNS name is live, the relay is not answering yet. Once it is, use it as a bootstrap node
+and relay:
+
+    /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/<RELAY_PEER_ID>
+    /dns4/relay.net.weirdbrains.com/udp/4747/quic-v1/p2p/<RELAY_PEER_ID>
+
+`<RELAY_PEER_ID>` is a placeholder until the relay has made its key; its info page
+(`https://relay.net.weirdbrains.com/.well-known/weirdnet-relay.json`) will give the real
+addresses. [DEPLOY.md](DEPLOY.md) is how it is installed.
 
 ## Quick start
 
