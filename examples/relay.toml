@@ -1,0 +1,50 @@
+# weirdnet-relay example configuration (/etc/weirdnet-relay/relay.toml).
+# Every key is optional; flags and WEIRDNET_RELAY_* environment variables override the file.
+
+name = "Example Weirdnet relay"
+operator = "Example Org"
+# Shown on the info page; where abuse reports and questions go.
+contact = "abuse@example.com"
+description = "A public relay and bootstrap node for the Weirdnet network."
+
+# Where relay.db (SQLCipher-encrypted: node key and peer table) lives.
+# Default: $STATE_DIRECTORY (systemd StateDirectory=), else /var/lib/weirdnet-relay.
+# state_dir = "/var/lib/weirdnet-relay"
+
+# The database key: 64 hex characters (or 32 raw bytes) in a file.
+# Default: the systemd credential `db-key` ($CREDENTIALS_DIRECTORY/db-key).
+# db_key_file = "/etc/weirdnet-relay/db-key"
+
+[network]
+# TCP and QUIC on every interface (IPv4 and IPv6) when `listen` is empty.
+port = 4747
+# listen = ["/ip4/0.0.0.0/tcp/4747", "/ip4/0.0.0.0/udp/4747/quic-v1"]
+# How others reach this relay, without /p2p/ (the relay adds its peer id).
+external = ["/dns4/relay.example.com/tcp/4747", "/dns4/relay.example.com/udp/4747/quic-v1"]
+# Other relays or bootstrap nodes, with /p2p/<peer id>.
+bootstrap = []
+mdns = false
+
+[limits]
+# "unlimited" (the default: no caps on reservations, circuits, duration or bytes, and no
+# rate limiters) or "libp2p" (libp2p's defaults: 2 minutes and 128 KiB per circuit).
+preset = "unlimited"
+# Any of these overrides the preset:
+# max_reservations = 128
+# max_reservations_per_peer = 4
+# reservation_duration_secs = 3600
+# max_circuits = 16
+# max_circuits_per_peer = 4
+# max_circuit_duration_secs = 120
+# max_circuit_bytes = 0          # 0: no limit
+# rate_limits = false
+
+[http]
+# The info page (HTML at /, JSON at /.well-known/weirdnet-relay.json, /healthz).
+# Put a TLS reverse proxy in front of it to publish it.
+enabled = true
+listen = "127.0.0.1:4780"
+
+[log]
+format = "pretty"   # or "json"
+level = "info"

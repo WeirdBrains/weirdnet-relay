@@ -1,0 +1,44 @@
+[package]
+name = "weirdnet-relay"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+description = "Weirdnet relay and bootstrap node: libp2p circuit relay v2 with data-carrying circuits, Kademlia server, AutoNAT and hole-punch coordination on weirdnet-net, a node key in a SQLCipher database, and an info page (HTML and /.well-known/weirdnet-relay.json)."
+authors = ["m3talsmith <m3talsmith@gmail.com>"]
+license = "BSD-3-Clause"
+repository = "https://github.com/WeirdBrains/weirdnet-relay"
+homepage = "https://net.weirdbrains.com/relay"
+readme = "README.md"
+keywords = ["p2p", "libp2p", "relay", "weirdnet"]
+categories = ["network-programming", "command-line-utilities"]
+include = ["src/**", "README.md", "LICENSE", "examples/relay.toml", "packaging/**", "assets/**"]
+
+[lib]
+name = "weirdnet_relay"
+
+[[bin]]
+name = "weirdnet-relay"
+path = "src/main.rs"
+
+[dependencies]
+# RelayLimits (configurable relay limits) lands on weirdnet-net main first; switch to the
+# crates.io release once it is published.
+weirdnet-net = { git = "https://github.com/WeirdBrains/weirdnet-net", branch = "main" }
+weirdnet-storage = { version = "=0.1.0", default-features = false }
+anyhow = "1"
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
+clap = { version = "4.6", features = ["derive", "env"] }
+getrandom = "0.3"
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "time", "sync"] }
+toml = "0.9"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+zeroize = "1"
+
+[dev-dependencies]
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }
