@@ -6,6 +6,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-16
+
 ### Added
 
 - Dynamic DNS through Grindvakt: the relay keeps its name and `_dnsaddr` records pointed at its public address, on DigitalOcean or DNSimple. Off by default.
@@ -63,7 +65,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Deployment guide for relay.net.weirdbrains.com.
 - Example and packaged configs join Weirdnet through the WeirdBrains public relay.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.1.1...v0.2.0
