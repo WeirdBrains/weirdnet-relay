@@ -69,6 +69,17 @@ enum Cmd {
     CheckConfig,
     /// Print a new random database key (64 hex characters).
     GenKey,
+    /// Stop forwarding a site (an abuse report, or the operator's own call); a running relay
+    /// picks it up within seconds.
+    RevokeSite {
+        name: String,
+        #[arg(long, default_value = "")]
+        reason: String,
+    },
+    /// Forward a revoked site again (its host registers again).
+    UnrevokeSite { name: String },
+    /// List revoked sites.
+    RevokedSites,
 }
 
 fn parse_preset(s: &str) -> Result<Preset, String> {
@@ -117,6 +128,10 @@ fn logging(cfg: &Config) {
     }
 }
 
+fn site_name(n: &str) -> anyhow::Result<String> {
+    weirdnet_net::ingress::sni::host_name(n.as_bytes()).ok_or_else(|| anyhow::anyhow!("`{n}` is not a host name"))
+}
+
 fn open_store(cfg: &Config) -> anyhow::Result<Store> {
     let key_path = dbkey::locate(cfg.db_key_file.as_deref())?;
     let key = dbkey::read(&key_path)?;
@@ -147,10 +162,31 @@ fn main() -> anyhow::Result<()> {
         }
         Cmd::Info => {
             let store = open_store(&cfg)?;
-            let relay = Relay::start(cfg, store)?;
+            let relay = Relay::start_opts(cfg, store, false)?;
             std::thread::sleep(Duration::from_millis(500));
             println!("{}", relay.refresh().to_json());
             relay.stop();
+            Ok(())
+        }
+        Cmd::RevokeSite { name, reason } => {
+            let n = site_name(&name)?;
+            open_store(&cfg)?.revoke_site(&n, &reason, weirdnet_net::now_ms())?;
+            println!("revoked {n}");
+            Ok(())
+        }
+        Cmd::UnrevokeSite { name } => {
+            let n = site_name(&name)?;
+            if open_store(&cfg)?.unrevoke_site(&n)? {
+                println!("{n} is forwarded again once its host registers");
+            } else {
+                println!("{n} was not revoked");
+            }
+            Ok(())
+        }
+        Cmd::RevokedSites => {
+            for r in open_store(&cfg)?.revoked_sites()? {
+                println!("{}\t{}\t{}", r.name, r.revoked_at, r.reason);
+            }
             Ok(())
         }
         Cmd::Run => run(cfg),
@@ -187,6 +223,9 @@ fn run(cfg: Config) -> anyhow::Result<()> {
             tokio::select! {
                 _ = tick.tick() => {
                     relay.refresh();
+                    if let Err(e) = relay.sync_revoked() {
+                        tracing::warn!("revoked sites: {e}");
+                    }
                     if !relay.running() {
                         tracing::error!("the node stopped");
                         break;

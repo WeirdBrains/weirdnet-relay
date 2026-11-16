@@ -86,3 +86,36 @@ fn the_state_dir_falls_back_to_the_default() {
     let c = Config { state_dir: Some("/tmp/x".into()), ..Default::default() };
     assert_eq!(c.db_path(), std::path::PathBuf::from("/tmp/x/relay.db"));
 }
+
+#[test]
+fn wss_and_forwarding_shape_the_node_config() {
+    let mut c = Config::default();
+    c.network.external = vec!["/dns4/relay.example.com/tcp/4747".into()];
+    c.wss = weirdnet_relay::config::Wss {
+        enabled: true,
+        name: "relay.example.com".into(),
+        cert: Some("/nonexistent/fullchain.pem".into()),
+        key: Some("/nonexistent/privkey.pem".into()),
+        port: 443,
+        local_port: 4743,
+    };
+    assert_eq!(c.wss_external().unwrap().to_string(), "/dns/relay.example.com/tcp/443/tls/ws");
+    let l: Vec<String> = c.wss_listen().iter().map(|a| a.to_string()).collect();
+    assert_eq!(l, ["/ip4/0.0.0.0/tcp/443/tls/ws", "/ip6/::/tcp/443/tls/ws"]);
+    c.forwarding.enabled = true;
+    let l: Vec<String> = c.wss_listen().iter().map(|a| a.to_string()).collect();
+    assert_eq!(l, ["/ip4/127.0.0.1/tcp/4743/tls/ws"]);
+    c.forwarding.local.insert("Info.Example.com".into(), "127.0.0.1:8443".into());
+    let local: Vec<(String, String)> = c.forwarding_local().unwrap().into_iter().map(|(n, a)| (n, a.to_string())).collect();
+    assert_eq!(
+        local,
+        [("info.example.com".to_string(), "127.0.0.1:8443".to_string()), ("relay.example.com".to_string(), "127.0.0.1:4743".to_string())]
+    );
+    let (https, http) = c.forwarding_addrs().unwrap();
+    assert_eq!((https.port(), http.map(|h| h.port())), (443, Some(80)));
+    c.forwarding.http = String::new();
+    assert_eq!(c.forwarding_addrs().unwrap().1, None);
+    // a missing certificate shows up when the node config is built
+    c.validate().unwrap();
+    assert!(c.node_config().unwrap_err().to_string().contains("wss"));
+}

@@ -33,7 +33,7 @@ fn identities_are_stored_once() {
     s.init_node_identity(b"one", "p1").unwrap();
     s.init_node_identity(b"two", "p2").unwrap();
     assert_eq!(s.node_identity().unwrap().unwrap().1, "p1");
-    assert_eq!(s.schema_version().unwrap(), 2);
+    assert_eq!(s.schema_version().unwrap(), 3);
 }
 
 #[test]
@@ -69,4 +69,18 @@ fn key_files_are_hex_or_raw() {
     std::fs::write(&f, hex.as_bytes()).unwrap();
     assert_eq!(dbkey::locate(Some(&f)).unwrap(), f);
     assert_eq!(*dbkey::read(&f).unwrap(), *k);
+}
+
+#[test]
+fn revoked_sites_are_kept_and_cleared() {
+    let s = Store::open_in_memory().unwrap();
+    s.revoke_site("b.example.com", "abuse report", 2).unwrap();
+    s.revoke_site("a.example.com", "", 1).unwrap();
+    s.revoke_site("b.example.com", "again", 3).unwrap();
+    let v = s.revoked_sites().unwrap();
+    assert_eq!(v.iter().map(|r| r.name.as_str()).collect::<Vec<_>>(), ["a.example.com", "b.example.com"]);
+    assert_eq!((v[1].reason.as_str(), v[1].revoked_at), ("again", 3));
+    assert!(s.unrevoke_site("a.example.com").unwrap());
+    assert!(!s.unrevoke_site("a.example.com").unwrap());
+    assert_eq!(s.revoked_sites().unwrap().len(), 1);
 }

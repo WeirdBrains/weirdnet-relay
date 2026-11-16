@@ -72,6 +72,9 @@ Then open http://127.0.0.1:4780/. Open TCP and UDP 4747 in the firewall.
 | `info` | Start briefly and print the info document. |
 | `check-config` | Check the config, open the database with the key, exit. |
 | `gen-key` | Print a new database key (64 hex characters) to stdout. |
+| `revoke-site NAME [--reason …]` | Stop forwarding a site (a running relay picks it up). |
+| `unrevoke-site NAME` | Forward a revoked site again. |
+| `revoked-sites` | List revoked sites. |
 
 Every config key has a flag and an environment variable: `--config` / `WEIRDNET_RELAY_CONFIG`,
 `--name`, `--operator`, `--contact`, `--state-dir`, `--db-key-file`, `--port`, `--listen`,
@@ -98,6 +101,15 @@ hands it to the service. Lose the key and the relay gets a new peer id; keep a c
 relay as a dynamic user with a private state directory, no capabilities, a read-only system,
 and a `@system-service` syscall filter. Logs go to the journal (no timestamps there); set
 `log.format = "json"` for structured logs.
+
+## WebSocket over TLS and site forwarding
+
+`[wss]` lets apps on HTTPS-only networks dial the relay at `/dns4/<name>/tcp/443/tls/ws`, with
+the relay holding the certificate or behind a TLS proxy. `[forwarding]` turns the relay into a
+public HTTPS ingress for Weirdnet hosts without a public address, by SNI passthrough: TLS ends
+on the host, each name needs its owner's signed grant and a `_weirdnet.<name>` DNS binding,
+and `revoke-site` stops a site. Both are off by default; see DEPLOY.md (step 7) and
+[examples/relay.toml](examples/relay.toml).
 
 ## The info document
 

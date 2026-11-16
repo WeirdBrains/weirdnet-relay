@@ -38,6 +38,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"]
 zeroize = "1"
 
 [dev-dependencies]
+rcgen = "0.13"
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
 
@@ -67,3 +68,7 @@ assets = [
   ["DEPLOY.md", "usr/share/doc/weirdnet-relay/", "644"],
   ["CHANGELOG.md", "usr/share/doc/weirdnet-relay/", "644"],
 ]
+
+# Until weirdnet-net 0.3.0 is on crates.io: its main branch (WSS, ingress).
+[patch.crates-io]
+weirdnet-net = { git = "https://github.com/WeirdBrains/weirdnet-net", rev = "551bc73ecb57b238686d807e3b6cd7a13dd74e00" }

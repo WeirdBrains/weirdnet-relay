@@ -33,7 +33,42 @@ pub struct Config {
     pub network: Network,
     pub limits: Limits,
     pub http: Http,
+    pub wss: Wss,
+    pub forwarding: Forwarding,
     pub log: Log,
+}
+
+/// WebSocket over TLS, for clients on networks that only let HTTPS out.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Wss {
+    pub enabled: bool,
+    /// The relay's DNS name, the one the certificate is for.
+    pub name: String,
+    /// The certificate chain and key (PEM), e.g. certbot's `fullchain.pem` and `privkey.pem`.
+    /// Without them the relay takes plain WebSocket on `127.0.0.1:<local_port>` from a TLS
+    /// reverse proxy (Caddy, nginx) that holds the certificate.
+    pub cert: Option<PathBuf>,
+    pub key: Option<PathBuf>,
+    /// The public port.
+    pub port: u16,
+    /// The loopback port behind a proxy, or behind forwarding (443 shared by server name).
+    pub local_port: u16,
+}
+
+/// Public HTTPS forwarding by SNI passthrough for hosts without a public address.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Forwarding {
+    pub enabled: bool,
+    /// Where HTTPS comes in.
+    pub https: String,
+    /// Where plain HTTP comes in (ACME HTTP-01 for registered names, redirects for the rest);
+    /// empty: not at all.
+    pub http: String,
+    /// Names served on this machine itself, passed untouched to a local address: the info
+    /// page's TLS proxy, say (`"relay.example.com" = "127.0.0.1:8443"`).
+    pub local: std::collections::BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -104,6 +139,8 @@ impl Default for Config {
             network: Network::default(),
             limits: Limits::default(),
             http: Http::default(),
+            wss: Wss::default(),
+            forwarding: Forwarding::default(),
             log: Log::default(),
         }
     }
@@ -118,6 +155,18 @@ impl Default for Network {
 impl Default for Http {
     fn default() -> Self {
         Http { enabled: true, listen: DEFAULT_HTTP.into() }
+    }
+}
+
+impl Default for Wss {
+    fn default() -> Self {
+        Wss { enabled: false, name: String::new(), cert: None, key: None, port: 443, local_port: 4743 }
+    }
+}
+
+impl Default for Forwarding {
+    fn default() -> Self {
+        Forwarding { enabled: false, https: "[::]:443".into(), http: "[::]:80".into(), local: Default::default() }
     }
 }
 
@@ -226,6 +275,21 @@ impl Config {
         if self.http.enabled {
             self.http_addr()?;
         }
+        if self.wss.enabled {
+            if weirdnet_net::ingress::sni::host_name(self.wss.name.as_bytes()).is_none() {
+                return Err(Error::Config("wss.name: the relay's DNS name (the certificate's)".into()));
+            }
+            if self.wss.cert.is_some() != self.wss.key.is_some() {
+                return Err(Error::Config("wss: `cert` and `key` go together (or neither, behind a TLS proxy)".into()));
+            }
+            if self.network.external.is_empty() {
+                return Err(Error::Config("wss: set network.external too (the relay then announces exactly those and the WSS address)".into()));
+            }
+        }
+        if self.forwarding.enabled {
+            self.forwarding_addrs()?;
+            self.forwarding_local()?;
+        }
         if !matches!(self.log.format.as_str(), "pretty" | "json") {
             return Err(Error::Config("log.format: `pretty` or `json`".into()));
         }
@@ -242,6 +306,57 @@ impl Config {
 
     pub fn bootstrap_addrs(&self) -> Result<Vec<Multiaddr>> {
         multiaddrs("bootstrap", &self.network.bootstrap)
+    }
+
+    /// Where forwarding takes HTTPS and HTTP.
+    pub fn forwarding_addrs(&self) -> Result<(SocketAddr, Option<SocketAddr>)> {
+        let f = &self.forwarding;
+        let https = f.https.parse().map_err(|_| Error::Config(format!("forwarding.https: `{}` is not host:port", f.https)))?;
+        let http = if f.http.trim().is_empty() {
+            None
+        } else {
+            Some(f.http.parse().map_err(|_| Error::Config(format!("forwarding.http: `{}` is not host:port", f.http)))?)
+        };
+        Ok((https, http))
+    }
+
+    /// The names forwarding passes to local addresses (the relay's own WSS among them).
+    pub fn forwarding_local(&self) -> Result<Vec<(String, SocketAddr)>> {
+        let mut v = vec![];
+        for (n, a) in &self.forwarding.local {
+            let addr = a.parse().map_err(|_| Error::Config(format!("forwarding.local: `{a}` is not host:port")))?;
+            let name = weirdnet_net::ingress::sni::host_name(n.as_bytes())
+                .ok_or_else(|| Error::Config(format!("forwarding.local: `{n}` is not a host name")))?;
+            v.push((name, addr));
+        }
+        if self.wss.enabled && self.wss.cert.is_some() && !v.iter().any(|(n, _)| n.eq_ignore_ascii_case(&self.wss.name)) {
+            v.push((self.wss.name.to_ascii_lowercase(), SocketAddr::from(([127, 0, 0, 1], self.wss.local_port))));
+        }
+        Ok(v)
+    }
+
+    /// The WSS address others dial: `/dns/<name>/tcp/<port>/tls/ws`.
+    pub fn wss_external(&self) -> Option<Multiaddr> {
+        if !self.wss.enabled {
+            return None;
+        }
+        format!("/dns/{}/tcp/{}/tls/ws", self.wss.name.trim_end_matches('.'), self.wss.port).parse().ok()
+    }
+
+    /// Where WSS listens: plain WebSocket on loopback behind a proxy, TLS on loopback behind
+    /// forwarding, else TLS on the public port on every interface.
+    pub fn wss_listen(&self) -> Vec<Multiaddr> {
+        if !self.wss.enabled {
+            return vec![];
+        }
+        let v = if self.wss.cert.is_none() {
+            vec![format!("/ip4/127.0.0.1/tcp/{}/ws", self.wss.local_port)]
+        } else if self.forwarding.enabled {
+            vec![format!("/ip4/127.0.0.1/tcp/{}/tls/ws", self.wss.local_port)]
+        } else {
+            vec![format!("/ip4/0.0.0.0/tcp/{}/tls/ws", self.wss.port), format!("/ip6/::/tcp/{}/tls/ws", self.wss.port)]
+        };
+        v.iter().filter_map(|a| a.parse().ok()).collect()
     }
 
     pub fn http_addr(&self) -> Result<SocketAddr> {
@@ -303,15 +418,26 @@ impl Config {
 
     /// The node configuration for weirdnet-net.
     pub fn node_config(&self) -> Result<NodeConfig> {
+        let mut listen = self.listen_addrs()?;
+        let mut external = self.external_addrs()?;
+        let mut wss = None;
+        if self.wss.enabled {
+            listen.extend(self.wss_listen());
+            external.extend(self.wss_external());
+            if let (Some(c), Some(k)) = (&self.wss.cert, &self.wss.key) {
+                wss = Some(weirdnet_net::WssTls::from_pem_files(c, k).map_err(|e| Error::Config(format!("wss: {e}")))?);
+            }
+        }
         Ok(NodeConfig {
-            listen: self.listen_addrs()?,
+            listen,
+            wss,
             mdns: self.network.mdns,
             relay_server: true,
             bootstrap: self.bootstrap_addrs()?,
             relays: vec![],
             memory: false,
             label: self.name.clone(),
-            external: self.external_addrs()?,
+            external,
             version: crate::VERSION.into(),
             relay_limits: self.relay_limits(),
             ..Default::default()

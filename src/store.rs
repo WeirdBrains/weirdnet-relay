@@ -40,7 +40,22 @@ CREATE TABLE names (
 );
 CREATE INDEX names_expires ON names(expires);
 "#,
+    r#"
+CREATE TABLE revoked_sites (
+  name TEXT PRIMARY KEY,
+  reason TEXT NOT NULL,
+  revoked_at INTEGER NOT NULL
+);
+"#,
 ];
+
+/// A site this relay doesn't forward.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RevokedSite {
+    pub name: String,
+    pub reason: String,
+    pub revoked_at: i64,
+}
 
 /// A peer the relay has seen.
 #[derive(Debug, Clone, PartialEq)]
@@ -129,6 +144,27 @@ impl Store {
     /// Forget peers not seen since `before` (ms); returns how many.
     pub fn prune_peers(&self, before: i64) -> Result<usize> {
         Ok(self.conn().execute("DELETE FROM peers WHERE last_seen < ?1", [before])?)
+    }
+
+    /// Stop forwarding `name` (lowercase, no trailing dot).
+    pub fn revoke_site(&self, name: &str, reason: &str, now: i64) -> Result<()> {
+        self.conn().execute(
+            "INSERT INTO revoked_sites (name, reason, revoked_at) VALUES (?1, ?2, ?3) ON CONFLICT(name) DO UPDATE SET reason = ?2, revoked_at = ?3",
+            params![name, reason, now],
+        )?;
+        Ok(())
+    }
+
+    /// Forward `name` again; whether it was revoked.
+    pub fn unrevoke_site(&self, name: &str) -> Result<bool> {
+        Ok(self.conn().execute("DELETE FROM revoked_sites WHERE name = ?1", [name])? > 0)
+    }
+
+    pub fn revoked_sites(&self) -> Result<Vec<RevokedSite>> {
+        let c = self.conn();
+        let mut st = c.prepare("SELECT name, reason, revoked_at FROM revoked_sites ORDER BY name")?;
+        let rows = st.query_map([], |r| Ok(RevokedSite { name: r.get(0)?, reason: r.get(1)?, revoked_at: r.get(2)? }))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
     }
 
     pub fn meta(&self, key: &str) -> Result<Option<String>> {

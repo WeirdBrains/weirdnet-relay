@@ -50,6 +50,9 @@ pub struct RelayInfo {
     pub network: NetworkIds,
     pub limits: LimitsInfo,
     pub status: RelayStatus,
+    /// Whether the relay forwards public HTTPS for registered sites (SNI passthrough).
+    #[serde(default)]
+    pub forwarding: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -127,10 +130,12 @@ pub fn transports(addrs: &[String]) -> Vec<String> {
     t
 }
 
-/// The addresses to announce: the configured external ones with `/p2p/<id>`, else what the
+/// The addresses to announce: the configured external ones (and the WSS one) with `/p2p/<id>`, else what the
 /// node reports as reachable, without relay circuits.
 pub fn announced(cfg: &Config, peer: &PeerId, reachable: &[String]) -> Vec<String> {
-    let external: Vec<String> = cfg.network.external.iter().map(|a| format!("{}/p2p/{peer}", a.trim().trim_end_matches('/'))).collect();
+    let wss = cfg.wss_external().map(|a| a.to_string());
+    let external: Vec<String> =
+        cfg.network.external.iter().map(|a| a.trim().trim_end_matches('/').to_string()).chain(wss).map(|a| format!("{a}/p2p/{peer}")).collect();
     if !external.is_empty() {
         return external;
     }
@@ -168,7 +173,16 @@ impl RelayInfo {
                 started_at: status.started_at,
                 generated_at: now,
             },
+            forwarding: cfg.forwarding.enabled,
         }
+        .with_forwarding_protocol()
+    }
+
+    fn with_forwarding_protocol(mut self) -> Self {
+        if self.forwarding {
+            self.protocols.push(weirdnet_net::ingress::GRANT_PROTOCOL.into());
+        }
+        self
     }
 
     pub fn to_json(&self) -> String {

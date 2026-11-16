@@ -1963,6 +1963,7 @@ dependencies = [
  "libp2p-swarm",
  "libp2p-tcp",
  "libp2p-upnp",
+ "libp2p-websocket",
  "libp2p-yamux",
  "multiaddr",
  "pin-project",
@@ -2370,6 +2371,27 @@ dependencies = [
  "libp2p-swarm",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "libp2p-websocket"
+version = "0.46.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02f11d7547a049e7a4d641ba73b400714ecaa85974d9700ac2014cdac63bfd47"
+dependencies = [
+ "either",
+ "futures",
+ "futures-rustls",
+ "libp2p-core",
+ "libp2p-identity",
+ "parking_lot",
+ "pin-project-lite",
+ "rw-stream-sink",
+ "soketto",
+ "thiserror 2.0.21",
+ "tracing",
+ "url",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -2962,6 +2984,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
 
 [[package]]
+name = "ppv-lite86"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
+dependencies = [
+ "zerocopy",
+]
+
+[[package]]
 name = "prefix-trie"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3132,6 +3163,8 @@ version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
 dependencies = [
+ "libc",
+ "rand_chacha",
  "rand_core 0.6.4",
 ]
 
@@ -3144,6 +3177,16 @@ dependencies = [
  "chacha20 0.10.2",
  "getrandom 0.4.3",
  "rand_core 0.10.1",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
+dependencies = [
+ "ppv-lite86",
+ "rand_core 0.6.4",
 ]
 
 [[package]]
@@ -3306,6 +3349,7 @@ checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
 dependencies = [
  "aws-lc-rs",
  "once_cell",
+ "ring",
  "rustls-pki-types",
  "rustls-webpki",
  "subtle",
@@ -3485,6 +3529,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1"
+version = "0.10.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a978451301f4db1d02937a4ab3ccce137717b81826e79b7d49ffe3244a13c3b8"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.17",
+ "digest 0.10.7",
+]
+
+[[package]]
 name = "sha2"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3606,6 +3661,21 @@ checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "soketto"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e859df029d160cb88608f5d7df7fb4753fd20fdfb4de5644f3d8b8440841721"
+dependencies = [
+ "base64",
+ "bytes",
+ "futures",
+ "httparse",
+ "log",
+ "rand 0.8.8",
+ "sha1",
 ]
 
 [[package]]
@@ -3885,6 +3955,7 @@ checksum = "e464cf451ba96ebfc6f9b6542f17ee8b8956e33f1e40d9690624e59d7a7f8a4b"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
  "libc",
  "pin-project-lite",
@@ -4290,6 +4361,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "webpki-roots"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7265c9301c16a8711c992c2d8da90ee77ef54b1ed51482d6dfeb00dc756b1297"
+dependencies = [
+ "rustls-pki-types",
+]
+
+[[package]]
 name = "weirdnet-keys"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4319,18 +4399,20 @@ dependencies = [
 [[package]]
 name = "weirdnet-net"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b03ee54d4eac83316fb126b19e4a778a3faccabe794845c753ddb1efcfaa862"
+source = "git+https://github.com/WeirdBrains/weirdnet-net?rev=551bc73ecb57b238686d807e3b6cd7a13dd74e00#551bc73ecb57b238686d807e3b6cd7a13dd74e00"
 dependencies = [
  "base64",
  "futures",
  "hex",
+ "hickory-resolver",
  "libp2p",
+ "rustls-pki-types",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "thiserror 2.0.21",
  "tokio",
+ "tokio-util",
  "tracing",
  "uuid",
  "weirdnet-keys",
@@ -4346,6 +4428,7 @@ dependencies = [
  "clap",
  "getrandom 0.3.4",
  "hex",
+ "rcgen",
  "serde",
  "serde_json",
  "tempfile",
@@ -4729,6 +4812,26 @@ dependencies = [
  "quote",
  "syn 3.0.10",
  "synstructure 0.14.0",
+]
+
+[[package]]
+name = "zerocopy"
+version = "0.8.63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5fe1f8f1b06191a00962174c61aa5005e0bb391a6d80d07e24d115c01a92ed8"
+dependencies = [
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.8.63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "863ad3ac83293fb4d740aedbfdc9240dd8d1a50c1099acd76ce80ce7c7230c7f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]

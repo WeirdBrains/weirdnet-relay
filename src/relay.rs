@@ -5,6 +5,7 @@ use crate::info::RelayInfo;
 use crate::store::Store;
 use crate::wire::{RELAY_PROFILE, Request, Response};
 use std::sync::{Arc, RwLock};
+use weirdnet_net::ingress::{Binding, DnsBinding, Ingress, IngressConfig};
 use weirdnet_net::{Handler, Node, PeerId, Sighting, now_ms};
 
 /// The latest info document, shared with the HTTP server and the request handler.
@@ -52,12 +53,19 @@ pub struct Relay {
     node: Node<Request, Response>,
     store: Arc<Store>,
     info: InfoHandle,
+    ingress: Option<Ingress>,
 }
 
 impl Relay {
     /// Start a relay on an open store: load or create the node key, start the node and
     /// build the first info document.
     pub fn start(cfg: Config, store: Store) -> Result<Relay> {
+        Self::start_opts(cfg, store, true)
+    }
+
+    /// [`Relay::start`], optionally without taking ports 443 and 80 for forwarding (to print
+    /// the info document beside a running relay).
+    pub fn start_opts(cfg: Config, store: Store, forward: bool) -> Result<Relay> {
         cfg.validate()?;
         let store = Arc::new(store);
         let key = weirdnet_net::identity::load_or_create(&*store)?;
@@ -68,7 +76,13 @@ impl Relay {
         let info = InfoHandle::new(RelayInfo::build(&cfg, &peer, &Default::default(), &[], now_ms()));
         let handler = Arc::new(RelayHandler { store: store.clone(), info: info.clone() });
         let node = Node::start(&RELAY_PROFILE, key, node_cfg, handler)?;
-        let relay = Relay { cfg, node, store, info };
+        let ingress = if forward && cfg.forwarding.enabled {
+            let binding: Arc<dyn Binding> = Arc::new(DnsBinding::system()?);
+            Some(start_forwarding(&cfg, &node, &store, binding)?)
+        } else {
+            None
+        };
+        let relay = Relay { cfg, node, store, info, ingress };
         relay.refresh();
         let i = relay.info.get();
         tracing::info!(peer_id = %i.peer_id, addrs = ?i.addrs, "relay started");
@@ -103,6 +117,27 @@ impl Relay {
         info
     }
 
+    /// The forwarding ingress, when on.
+    pub fn ingress(&self) -> Option<&Ingress> {
+        self.ingress.as_ref()
+    }
+
+    /// Bring the ingress's revoked names in line with the database (`revoke-site` and
+    /// `unrevoke-site` write there while the relay runs).
+    pub fn sync_revoked(&self) -> Result<()> {
+        let Some(i) = &self.ingress else { return Ok(()) };
+        let want: std::collections::HashSet<String> = self.store.revoked_sites()?.into_iter().map(|r| r.name).collect();
+        for n in i.revoked() {
+            if !want.contains(&n) {
+                i.unrevoke(&n);
+            }
+        }
+        for n in &want {
+            i.revoke(n);
+        }
+        Ok(())
+    }
+
     pub fn running(&self) -> bool {
         self.node.running()
     }
@@ -110,4 +145,16 @@ impl Relay {
     pub fn stop(self) {
         self.node.stop();
     }
+}
+
+/// Start forwarding on `node`: the revoked names from the store, and the relay's own WSS name
+/// routed to its loopback listener.
+pub fn start_forwarding(cfg: &Config, node: &Node<Request, Response>, store: &Store, binding: Arc<dyn Binding>) -> Result<Ingress> {
+    let (https, http) = cfg.forwarding_addrs()?;
+    let local = cfg.forwarding_local()?;
+    let blocked = store.revoked_sites()?.into_iter().map(|r| r.name).collect();
+    let icfg = IngressConfig { https: Some(https), http, enabled: true, blocked, local, ..Default::default() };
+    let i = Ingress::start(node, icfg, binding)?;
+    tracing::info!(https = ?i.https_addr(), http = ?i.http_addr(), "forwarding sites by server name");
+    Ok(i)
 }

@@ -48,6 +48,32 @@ preset = "unlimited"
 enabled = true
 listen = "127.0.0.1:4780"
 
+[wss]
+# WebSocket over TLS for clients on networks that only let HTTPS out (dialed as
+# /dns4/<name>/tcp/<port>/tls/ws/p2p/<id>). Needs network.external set. Without cert and key
+# the relay takes plain WebSocket on 127.0.0.1:<local_port> from a TLS reverse proxy that holds
+# the certificate (DEPLOY.md has a Caddy example). With them it serves TLS itself, on `port`
+# (ports below 1024 need the drop-in in DEPLOY.md), or on 127.0.0.1:<local_port> behind
+# forwarding, which then shares 443 by server name. A renewed certificate takes a restart.
+enabled = false
+name = "relay.example.com"
+# cert = "/run/credentials/weirdnet-relay.service/tls-cert"   # LoadCredential= (DEPLOY.md)
+# key = "/run/credentials/weirdnet-relay.service/tls-key"
+port = 443
+local_port = 4743
+
+[forwarding]
+# Public HTTPS for Weirdnet hosts without a public address, by SNI passthrough: the relay
+# reads only the server name, never holds a site's key or sees its traffic, and forwards a
+# name only for a host with its owner's signed grant and a `_weirdnet.<name>` DNS binding.
+# Port 80 passes ACME HTTP-01 for those names and redirects the rest to HTTPS.
+# `weirdnet-relay revoke-site <name>` stops a site; `contact` above takes abuse reports.
+enabled = false
+https = "[::]:443"
+http = "[::]:80"     # "" for none
+# Names this machine serves itself, passed untouched (the info page's TLS proxy, say):
+# local = { "relay.example.com" = "127.0.0.1:8443" }
+
 [log]
 format = "pretty"   # or "json"
 level = "info"

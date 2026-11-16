@@ -150,6 +150,69 @@ These are in this repository's README and example config and on
 https://net.weirdbrains.com/relay. A rebuilt server with a new key changes the peer id; update
 them all then.
 
+## 7. WebSocket over TLS and site forwarding (optional)
+
+**WebSocket over TLS** lets apps on networks that only let HTTPS out reach the relay at
+`/dns4/relay.net.weirdbrains.com/tcp/443/tls/ws/p2p/<id>`. With the info page already behind
+Caddy on 443, let Caddy keep the certificate and hand WebSocket upgrades to the relay:
+
+```toml
+[wss]
+enabled = true
+name = "relay.net.weirdbrains.com"
+port = 443          # what apps dial (Caddy's)
+local_port = 4743   # plain WebSocket on 127.0.0.1, from Caddy
+```
+
+    relay.net.weirdbrains.com {
+        @ws {
+            header Connection *Upgrade*
+            header Upgrade websocket
+        }
+        reverse_proxy @ws 127.0.0.1:4743
+        reverse_proxy 127.0.0.1:4780
+    }
+
+`network.external` must be set (the relay then announces exactly those addresses and the WSS one).
+
+**Site forwarding** gives Weirdnet hosts without a public address public HTTPS: the relay
+takes 443 (and 80), reads only the TLS server name, and passes the connection to the host that
+registered that name with its owner's signed grant and a `_weirdnet.<name>` TXT binding. The
+relay never holds a site's key or sees its traffic. Port 80 passes ACME HTTP-01 for those
+names and redirects everything else to HTTPS. Caddy moves behind it to a local port, and its
+own name is passed through untouched:
+
+```toml
+[forwarding]
+enabled = true
+https = "[::]:443"
+http = "[::]:80"
+local = { "relay.net.weirdbrains.com" = "127.0.0.1:8443" }
+```
+
+and in the Caddyfile, `https_port 8443`, `auto_https disable_redirects`, and the site as
+`relay.net.weirdbrains.com:8443` (Caddy then gets its certificate by TLS-ALPN-01 through the
+passthrough). Binding 80 and 443 needs a drop-in, because the unit runs with no capabilities:
+
+    sudo systemctl edit weirdnet-relay
+
+```ini
+[Service]
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+PrivateUsers=no
+```
+
+Open TCP 80 and 443 in the firewall. To stop forwarding a site (an abuse report to
+`contact`, or the operator's own call):
+
+    sudo weirdnet-relay --config /etc/weirdnet-relay/relay.toml revoke-site site.example.com --reason "abuse report"
+    sudo weirdnet-relay --config /etc/weirdnet-relay/relay.toml revoked-sites
+    sudo weirdnet-relay --config /etc/weirdnet-relay/relay.toml unrevoke-site site.example.com
+
+(run them the way `check-config` runs in step 3, so they open the same database). A running
+relay picks the change up within seconds. `enabled = false` turns forwarding off entirely.
+
 ## Updating
 
 Install the new release's package the same way (`apt-get install`, `dnf install`,

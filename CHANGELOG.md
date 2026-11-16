@@ -6,6 +6,13 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- WebSocket over TLS for apps on networks that only let HTTPS out, served by the relay or behind a TLS proxy.
+- Public HTTPS forwarding for Weirdnet hosts by SNI passthrough, off by default.
+- revoke-site, unrevoke-site and revoked-sites commands.
+- The info document says whether the relay forwards sites.
+
 ## [0.1.1] - 2026-11-16
 
 ### Added
