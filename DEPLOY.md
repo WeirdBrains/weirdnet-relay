@@ -5,7 +5,7 @@ These steps install weirdnet-relay there with systemd. They work the same on any
 server with systemd 250 or newer (for `systemd-creds`).
 
 Status: **live** since 2026-11-16 (https://relay.net.weirdbrains.com/). Peer id
-`12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB`.
+`12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB`. Runs 0.6.0 (weirdnet-net 0.8) since 2026-11-19.
 
 ## 1. Install the package
 
