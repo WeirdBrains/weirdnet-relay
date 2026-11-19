@@ -97,7 +97,7 @@ fn apps_reach_each_other_through_the_relay_and_it_describes_itself() {
 /// Muninn's protocol ids, as in Muninn's `profile.rs` (`/muninn/...`; Muninn keeps them).
 const MUNINN_IDS: weirdnet_net::Profile = weirdnet_net::Profile {
     name: "muninn",
-    protocol: "/muninn/net/1",
+    protocol: "/muninn/net/2",
     kad: "/muninn/kad/1",
     relay_key: "/muninn/relay/1",
     identify: "/muninn/id/1",

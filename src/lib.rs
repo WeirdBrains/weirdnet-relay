@@ -4,7 +4,7 @@
 //! with [`weirdnet_net::RelayLimits::unlimited`] by default), Kademlia in server mode and
 //! the relay provider record, AutoNAT and DCUtR coordination. Its node key and its state
 //! live in one SQLCipher database ([`store`]) opened with a key the operator supplies
-//! ([`dbkey`]). It answers its own small protocol, `/weirdnet/relay/info/1` ([`wire`]),
+//! ([`dbkey`]). It answers its own small protocol, `/weirdnet/relay/info/2` ([`wire`]),
 //! and serves an info page ([`http`]): HTML at `/` and [`RelayInfo`] at
 //! `/.well-known/weirdnet-relay.json`.
 //!

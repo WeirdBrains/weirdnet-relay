@@ -6,6 +6,11 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Breaking (wire): built on weirdnet-net 0.8.0. The names server is `/weirdnet/names/2` and the relay's own requests are `/weirdnet/relay/info/2`, so only 0.8 nodes register and look up names here.
+- Circuits, Kademlia, identify, wake and update streams are unchanged.
+
 ## [0.5.0] - 2026-11-16
 
 ### Added

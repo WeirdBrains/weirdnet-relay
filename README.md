@@ -23,12 +23,12 @@ What it does:
 - **Kademlia bootstrap** (server mode), identify, ping, AutoNAT, DCUtR, mDNS (off by default).
 - **One encrypted database**: the node key and a table of peers seen, in SQLCipher, keyed
   from a systemd credential.
-- **A names server** (`/weirdnet/names/1`): devices register signed peer records with their
+- **A names server** (`/weirdnet/names/2`): devices register signed peer records with their
   home relay and others look them up by user id; records and withdrawals are checked by
   weirdnet-net and kept in the relay's database until they expire.
 - **An info page** describing the relay: HTML at `/`, JSON at
   `/.well-known/weirdnet-relay.json`, health at `/healthz`, and the same document over the
-  `/weirdnet/relay/info/1` protocol.
+  `/weirdnet/relay/info/2` protocol.
 
 ## The WeirdBrains public relay
 
@@ -160,7 +160,7 @@ the systemd credential `dns-token` or `token_file`. See DEPLOY.md (step 8).
   "transports": ["tcp", "quic-v1"],
   "roles": ["relay", "bootstrap", "kad-server"],
   "network": { "profile": "weirdnet-relay", "kad": "/weirdnet/kad/1", "identify": "/weirdnet/id/1",
-               "relay_key": "/weirdnet/relay/1", "info_protocol": "/weirdnet/relay/info/1", "default_port": 4747 },
+               "relay_key": "/weirdnet/relay/1", "info_protocol": "/weirdnet/relay/info/2", "default_port": 4747 },
   "limits": { "max_circuits": null, "max_circuit_duration_secs": null, "max_circuit_bytes": null, "rate_limits": false, "…": "…" },
   "status": { "nat": "public", "connected_peers": 12, "started_at": 0, "generated_at": 0 }
 }

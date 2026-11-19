@@ -1,5 +1,5 @@
 //! The relay's info document: `/.well-known/weirdnet-relay.json`, the `Info` answer on
-//! `/weirdnet/relay/info/1`, and what the HTML page shows.
+//! `/weirdnet/relay/info/2`, and what the HTML page shows.
 use crate::config::Config;
 use crate::error::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub const PROTOCOLS: &[&str] = &[
     crate::wire::INFO_PROTOCOL,
     "/weirdnet/kad/1",
     "/weirdnet/id/1",
-    "/weirdnet/names/1",
+    WEIRDNET.names,
     "/libp2p/circuit/relay/0.2.0/hop",
     "/libp2p/circuit/relay/0.2.0/stop",
     "/libp2p/dcutr",

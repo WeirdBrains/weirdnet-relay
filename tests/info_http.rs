@@ -29,6 +29,10 @@ fn the_document_announces_external_addresses_with_the_peer_id() {
     assert_eq!(i.transports, vec!["tcp".to_string(), "quic-v1".to_string()]);
     assert_eq!(i.network.kad, "/weirdnet/kad/1");
     assert_eq!(i.network.relay_key, "/weirdnet/relay/1");
+    // weirdnet-net 0.8: names and the relay's own requests moved to /2 with the new codec
+    assert_eq!(i.network.info_protocol, "/weirdnet/relay/info/2");
+    assert!(i.protocols.iter().any(|p| p == "/weirdnet/names/2"));
+    assert!(!i.protocols.iter().any(|p| p.ends_with("names/1") || p.ends_with("info/1")));
     assert_eq!((i.limits.max_circuit_bytes, i.limits.max_circuit_duration_secs, i.limits.max_circuits), (None, None, None));
     assert!(!i.limits.rate_limits);
     assert_eq!(i.status.connected_peers, 2);

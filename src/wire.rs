@@ -1,4 +1,4 @@
-//! The relay's own request protocol, `/weirdnet/relay/info/1`.
+//! The relay's own request protocol, `/weirdnet/relay/info/2`.
 //!
 //! [`RELAY_PROFILE`] is [`WEIRDNET`] with only the request-response protocol, the agent name
 //! and the thread name changed: Kademlia, identify, the relay provider key and every
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use weirdnet_net::{Profile, WEIRDNET};
 
 /// The relay's request-response protocol id.
-pub const INFO_PROTOCOL: &str = "/weirdnet/relay/info/1";
+pub const INFO_PROTOCOL: &str = "/weirdnet/relay/info/2";
 
 /// The profile the relay's node runs.
 pub const RELAY_PROFILE: Profile = Profile { name: "weirdnet-relay", protocol: INFO_PROTOCOL, thread: "weirdnet-relay", ..WEIRDNET };

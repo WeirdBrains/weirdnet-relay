@@ -21,7 +21,7 @@ name = "weirdnet-relay"
 path = "src/main.rs"
 
 [dependencies]
-weirdnet-net = "=0.4.0"
+weirdnet-net = "=0.8.0"
 weirdnet-storage = { version = "=0.1.0", default-features = false }
 weirdnet-push = "=0.1.0"
 futures = "0.3"
