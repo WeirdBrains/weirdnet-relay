@@ -30,9 +30,9 @@ What it does:
   `/.well-known/weirdnet-relay.json`, health at `/healthz`, and the same document over the
   `/weirdnet/relay/info/2` protocol.
 
-## The WeirdBrains public relay
+## The [WeirdBrains](https://weirdbrains.com) public relay
 
-WeirdBrains runs public relays. The first is **relay.net.weirdbrains.com**, *live*
+[WeirdBrains](https://weirdbrains.com) runs public relays. The first is **relay.net.weirdbrains.com**, *live*
 ([info page](https://relay.net.weirdbrains.com/)). Use it as a bootstrap node and relay:
 
     /dns4/relay.net.weirdbrains.com/tcp/4747/p2p/12D3KooWHp56KezbVCubjuznJGqyn9xTe8PWePfuwv4YQUGxaRBB
@@ -179,7 +179,7 @@ publish the page. `v` only changes on a breaking change.
     packaging/arch/build.sh VERSION x86_64     # on Arch, with base-devel; also the TAUR recipe
     packaging/test-install.sh rpm|arch FILE    # the install test CI runs in containers
 
-Releases go through the shared WeirdBrains release script, `scripts/weirdnet_release.py`
+Releases go through the shared [WeirdBrains](https://weirdbrains.com) release script, `scripts/weirdnet_release.py`
 (configured in `release.toml`); the Release workflow builds the packages for the tag and
 attaches them to the GitHub release. Edition 2024, Rust 1.99+. `cargo test` includes a loopback test that runs a real relay over
 TCP, reserves a slot, carries a 1 MiB answer through the circuit and asks for the info.

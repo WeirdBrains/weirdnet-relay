@@ -1,6 +1,6 @@
-# Deploying the WeirdBrains public relay
+# Deploying the [WeirdBrains](https://weirdbrains.com) public relay
 
-The WeirdBrains public relay is **relay.net.weirdbrains.com**.
+The [WeirdBrains](https://weirdbrains.com) public relay is **relay.net.weirdbrains.com**.
 These steps install weirdnet-relay there with systemd. They work the same on any Linux
 server with systemd 250 or newer (for `systemd-creds`).
 
@@ -30,7 +30,7 @@ or `.aarch64.rpm`. The packages are not GPG-signed; check `SHA256SUMS` (and its 
     sudo dnf install ./weirdnet-relay-$V-1.$(uname -m).rpm
     sudo zypper install --allow-unsigned-rpm ./weirdnet-relay-$V-1.$(uname -m).rpm
 
-**Arch Linux, Omarchy (pacman).** From TAUR, the WeirdBrains Arch user repository
+**Arch Linux, Omarchy (pacman).** From TAUR, the [WeirdBrains](https://weirdbrains.com) Arch user repository
 (https://pkg.taur.weirdbrains.com/packages/weirdnet-relay), with an AUR helper (not as root):
 
     paru --aururl https://pkg.taur.weirdbrains.com --aurrpcurl https://pkg.taur.weirdbrains.com/rpc -S weirdnet-relay
