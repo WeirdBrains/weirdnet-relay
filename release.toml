@@ -29,7 +29,7 @@ path = "Cargo.lock"
 # The weirdnet-net version the relay is built on (released from weirdnet-net first).
 [[requires]]
 crate = "weirdnet-net"
-version = "0.8.0"
+version = "0.8.2"
 manifest = "Cargo.toml"
 lock = "Cargo.lock"
 

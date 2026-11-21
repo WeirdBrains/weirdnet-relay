@@ -22,10 +22,10 @@ path = "src/main.rs"
 
 [dependencies]
 weirdnet-net = "=0.8.0"
-weirdnet-storage = { version = "=0.1.0", default-features = false }
-weirdnet-push = "=0.1.0"
+weirdnet-storage = { version = "=0.1.1", default-features = false }
+weirdnet-push = "=0.1.1"
 futures = "0.3"
-weirdnet-update = { version = "=0.2.0", features = ["wire"] }
+weirdnet-update = { version = "=0.2.2", features = ["wire"] }
 grindvakt-core = "=1.2.0"
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
@@ -42,7 +42,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"]
 zeroize = "1"
 
 [dev-dependencies]
-weirdnet-push = { version = "=0.1.0", features = ["server"] }
+weirdnet-push = { version = "=0.1.1", features = ["server"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 rcgen = "0.13"
 semver = "1"
