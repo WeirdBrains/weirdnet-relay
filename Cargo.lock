@@ -5084,9 +5084,9 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-net"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df77cf3385bdf7eebef2770a3f3a46c660d83a6be73feac04a61a88a16f471cf"
+checksum = "75a48adc55905fdd8343424eaf56fcf74ddbd0933e447c940a7a982d4af4586f"
 dependencies = [
  "base64 0.22.1",
  "blake3",
@@ -5095,7 +5095,9 @@ dependencies = [
  "futures",
  "hex",
  "hickory-resolver",
+ "jni-sys",
  "libp2p",
+ "ndk-context",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -5138,7 +5140,7 @@ dependencies = [
 
 [[package]]
 name = "weirdnet-relay"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "axum",

@@ -6,6 +6,12 @@ All notable changes to weirdnet-relay are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-21
+
+### Changed
+
+- Package metadata and docs follow the WeirdBrains public-content rules (Weird Brains LLC as the copyright holder, m3talsmith as the author, no machine details). No code or API changes.
+
 ## [0.6.0] - 2026-11-19
 
 ### Changed
@@ -72,7 +78,8 @@ All notable changes to weirdnet-relay are listed here. The format follows
 - Deployment guide for relay.net.weirdbrains.com.
 - Example and packaged configs join Weirdnet through the [WeirdBrains](https://weirdbrains.com) public relay.
 
-[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WeirdBrains/weirdnet-relay/compare/v0.3.0...v0.4.0
